@@ -1,14 +1,14 @@
-/* highlight.js token overrides for our dark theme */
+/* highlight.js token overrides — CCQG/FlowTrain palette */
 .hljs { background: transparent !important; color: var(--text-primary); }
-.hljs-keyword, .hljs-selector-tag, .hljs-built_in { color: #c084fc; } /* violet */
-.hljs-string, .hljs-attr                           { color: #86efac; } /* green  */
-.hljs-number, .hljs-literal                        { color: #fcd34d; } /* amber  */
-.hljs-comment, .hljs-quote                         { color: #4b5563; font-style: italic; }
-.hljs-variable, .hljs-template-variable            { color: #f9a8d4; } /* pink   */
-.hljs-type, .hljs-class .hljs-title                { color: #7dd3fc; } /* sky    */
-.hljs-function .hljs-title, .hljs-title            { color: #93c5fd; }
-.hljs-meta                                         { color: #6ee7b7; }
+.hljs-keyword, .hljs-selector-tag, .hljs-built_in { color: #a855f7; } /* CCQG purple */
+.hljs-string, .hljs-attr                           { color: #22c55e; } /* CCQG green  */
+.hljs-number, .hljs-literal                        { color: #eab308; } /* CCQG yellow */
+.hljs-comment, .hljs-quote                         { color: #6b6b7b; font-style: italic; }
+.hljs-variable, .hljs-template-variable            { color: #f97316; } /* CCQG chart-5 */
+.hljs-type, .hljs-class .hljs-title                { color: #06b6d4; } /* CCQG chart-6 */
+.hljs-function .hljs-title, .hljs-title            { color: #7b8cff; } /* CCQG accent-blue-light */
+.hljs-meta                                         { color: #22c55e; }
 .hljs-tag                                          { color: var(--text-secondary); }
-.hljs-name                                         { color: #c084fc; }
-.hljs-deletion  { background: rgba(248,113,113,0.15); }
-.hljs-addition  { background: rgba(110,231,183,0.12); }
+.hljs-name                                         { color: #a855f7; }
+.hljs-deletion  { background: rgba(239,68,68,0.15); }
+.hljs-addition  { background: rgba(34,197,94,0.12); }

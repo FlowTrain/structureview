@@ -1,54 +1,74 @@
-/* ─── Design tokens ─────────────────────────────────────────── */
+/* ─── StructureView — CCQG/FlowTrain Design Tokens ─────────── */
+/* Aligned with Clean Code Quality Guardian dashboard theme     */
+/* FlowTrain brand: #2BAEE4 (blue), #5A4FCF (purple), #231F20  */
 :root {
-  /* Surfaces */
-  --bg-app:        #0f0f0f;
-  --bg-sidebar:    #141414;
-  --bg-tabs:       #111111;
-  --bg-content:    #0f0f0f;
-  --bg-elevated:   #1a1a1a;
-  --bg-hover:      #1e1e1e;
-  --bg-active:     #242424;
-  --bg-input:      #1a1a1a;
+  /* Surfaces — CCQG dashboard palette */
+  --bg-app:        #0a0a0f;
+  --bg-sidebar:    #12121a;
+  --bg-tabs:       #0e0e16;
+  --bg-content:    #0a0a0f;
+  --bg-elevated:   #1a1a26;
+  --bg-hover:      #1e1e2a;
+  --bg-active:     #242436;
+  --bg-input:      #16161f;
+  --bg-card:       #16161f;
 
-  /* Borders */
-  --border:        rgba(255,255,255,0.07);
-  --border-strong: rgba(255,255,255,0.12);
+  /* Borders — deeper blue-tinted neutrals */
+  --border:        #2a2a3a;
+  --border-strong: #3a3a4a;
 
   /* Text */
-  --text-primary:   #e8e8e2;
-  --text-secondary: #888882;
-  --text-tertiary:  #55554e;
-  --text-accent:    #c8b4f0;   /* soft lavender accent */
-  --text-link:      #7eb8f7;
+  --text-primary:   #e8e8ed;
+  --text-secondary: #9898a6;
+  --text-tertiary:  #6b6b7b;
+  --text-accent:    #7b8cff;    /* CCQG blue accent */
+  --text-link:      #2BAEE4;    /* FlowTrain Blue */
 
-  /* Accent */
-  --accent:         #a78bfa;   /* violet-400 */
-  --accent-dim:     rgba(167,139,250,0.15);
-  --accent-glow:    rgba(167,139,250,0.06);
+  /* Accent — FlowTrain gradient anchors */
+  --accent:         #5b6abf;    /* CCQG dashboard accent */
+  --accent-bright:  #7b8cff;    /* Light accent for hover/focus */
+  --accent-dim:     rgba(91,106,191,0.15);
+  --accent-glow:    rgba(91,106,191,0.06);
 
-  /* Semantic */
-  --color-md:       #7eb8f7;
-  --color-json:     #f0b86e;
-  --color-success:  #6ee7b7;
-  --color-danger:   #f87171;
+  /* FlowTrain Brand */
+  --ft-blue:        #2BAEE4;
+  --ft-purple:      #5A4FCF;
+  --ft-charcoal:    #231F20;
+  --ft-gradient:    linear-gradient(135deg, #2BAEE4 0%, #3B8FCC 45%, #5A4FCF 75%, #231F20 100%);
+
+  /* Semantic — file type colors */
+  --color-md:       #7b8cff;    /* Matches CCQG chart-1 */
+  --color-json:     #eab308;    /* CCQG yellow */
+  --color-success:  #22c55e;    /* CCQG green */
+  --color-danger:   #ef4444;    /* CCQG red */
+
+  /* Dashboard accent palette (from CCQG theme) */
+  --accent-green:   #22c55e;
+  --accent-yellow:  #eab308;
+  --accent-red:     #ef4444;
+  --accent-purple:  #a855f7;
 
   /* Layout */
   --sidebar-width:  220px;
   --titlebar-h:     36px;
   --tabbar-h:       38px;
   --toolbar-h:      38px;
-  --radius-sm:      4px;
-  --radius-md:      6px;
-  --radius-lg:      10px;
+  --radius-sm:      6px;        /* CCQG radius-sm */
+  --radius-md:      8px;        /* CCQG radius-md */
+  --radius-lg:      12px;       /* CCQG radius-lg */
 
-  /* Typography */
-  --font-ui:        'Segoe UI', system-ui, -apple-system, sans-serif;
+  /* Typography — CCQG system */
+  --font-ui:        'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   --font-doc:       'Georgia', 'Times New Roman', serif;
-  --font-mono:      'Cascadia Code', 'Fira Code', 'Consolas', monospace;
+  --font-mono:      'JetBrains Mono', 'Fira Code', 'Consolas', monospace;
 
-  /* Transitions */
-  --t-fast:  80ms ease;
-  --t-med:   150ms ease;
+  /* Transitions — CCQG timing */
+  --t-fast:  150ms ease;
+  --t-med:   250ms ease;
+
+  /* Shadows — CCQG card/elevated */
+  --shadow-card:     0 2px 8px rgba(0, 0, 0, 0.3);
+  --shadow-elevated: 0 8px 24px rgba(0, 0, 0, 0.4);
 }
 
 /* ─── Reset ────────────────────────────────────────────────────── */
@@ -63,7 +83,7 @@ html, body {
   color: var(--text-primary);
   font-family: var(--font-ui);
   font-size: 13px;
-  line-height: 1.5;
+  line-height: 1.6;           /* CCQG body line-height */
   -webkit-font-smoothing: antialiased;
   user-select: none;
 }
@@ -71,12 +91,12 @@ html, body {
 /* ─── Scrollbars ───────────────────────────────────────────────── */
 ::-webkit-scrollbar        { width: 6px; height: 6px; }
 ::-webkit-scrollbar-track  { background: transparent; }
-::-webkit-scrollbar-thumb  { background: rgba(255,255,255,0.1); border-radius: 3px; }
-::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.18); }
+::-webkit-scrollbar-thumb  { background: rgba(123,140,255,0.15); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(123,140,255,0.25); }
 
 /* ─── Focus ring ───────────────────────────────────────────────── */
 :focus-visible {
-  outline: 1.5px solid var(--accent);
+  outline: 1.5px solid var(--accent-bright);
   outline-offset: 1px;
   border-radius: var(--radius-sm);
 }
@@ -100,7 +120,7 @@ html, body {
 .icon-btn svg { width: 14px; height: 14px; fill: currentColor; pointer-events: none; }
 .icon-btn:hover  { background: var(--bg-hover); color: var(--text-primary); }
 .icon-btn:active { background: var(--bg-active); }
-.icon-btn.active { color: var(--accent); }
+.icon-btn.active { color: var(--accent-bright); }
 
 /* ─── Text inputs ──────────────────────────────────────────────── */
 input[type="text"] {
@@ -116,7 +136,7 @@ input[type="text"] {
   transition: border-color var(--t-fast);
 }
 input[type="text"]::placeholder { color: var(--text-tertiary); }
-input[type="text"]:focus { outline: none; border-color: var(--accent); }
+input[type="text"]:focus { outline: none; border-color: var(--accent-bright); }
 
 /* ─── Buttons ──────────────────────────────────────────────────── */
 button {

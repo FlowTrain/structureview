@@ -47,15 +47,15 @@
 
 /* Keys */
 .json-key {
-  color: #c8b4f0;    /* soft lavender */
+  color: #7b8cff;    /* CCQG accent-blue-light */
   font-weight: 500;
 }
 .json-colon { color: var(--text-tertiary); margin: 0 4px; }
 
 /* Value tokens */
-.json-string  { color: #86efac; }   /* green-300  */
-.json-number  { color: #fcd34d; }   /* amber-300  */
-.json-boolean { color: #f9a8d4; }   /* pink-300   */
+.json-string  { color: #22c55e; }   /* CCQG green  */
+.json-number  { color: #eab308; }   /* CCQG yellow */
+.json-boolean { color: #a855f7; }   /* CCQG purple */
 .json-null    { color: var(--text-tertiary); font-style: italic; }
 
 /* Brackets & braces */

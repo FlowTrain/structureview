@@ -41,10 +41,10 @@
 .doc-md a {
   color: var(--text-link);
   text-decoration: none;
-  border-bottom: 1px solid rgba(126,184,247,0.3);
+  border-bottom: 1px solid rgba(43,174,228,0.3);
   transition: border-color var(--t-fast), color var(--t-fast);
 }
-.doc-md a:hover { color: #a8d4ff; border-bottom-color: #a8d4ff; }
+.doc-md a:hover { color: #58C7F0; border-bottom-color: #58C7F0; }
 
 /* Lists */
 .doc-md ul, .doc-md ol {
@@ -170,5 +170,5 @@
   border-radius: 3px;
   text-transform: uppercase;
 }
-.doc-meta-badge.md   { background: rgba(126,184,247,0.15); color: var(--color-md); }
-.doc-meta-badge.json { background: rgba(240,184,110,0.15); color: var(--color-json); }
+.doc-meta-badge.md   { background: rgba(123,140,255,0.15); color: var(--color-md); }
+.doc-meta-badge.json { background: rgba(234,179,8,0.15);   color: var(--color-json); }

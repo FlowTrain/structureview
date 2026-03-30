@@ -14,7 +14,10 @@
 #titlebar-appname {
   font-size: 12px;
   font-weight: 600;
-  color: var(--text-accent);
+  background: var(--ft-gradient);
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
   letter-spacing: 0.06em;
   text-transform: uppercase;
 }
@@ -155,7 +158,7 @@
 .tab.active {
   background: var(--bg-content);
   color: var(--text-primary);
-  border-top-color: var(--accent);
+  border-top-color: var(--ft-blue);
 }
 .tab-dot {
   width: 5px; height: 5px;
@@ -205,12 +208,13 @@
 #welcome-logo {
   width: 56px; height: 56px;
   border-radius: 14px;
-  background: var(--accent-dim);
+  background: var(--ft-gradient);
   border: 1px solid var(--border-strong);
   display: flex; align-items: center; justify-content: center;
-  font-size: 18px; font-weight: 700; color: var(--accent);
+  font-size: 18px; font-weight: 700; color: #fff;
   margin: 0 auto 16px;
   letter-spacing: 0.04em;
+  box-shadow: 0 4px 16px rgba(43, 174, 228, 0.2);
 }
 #welcome h1 {
   font-size: 22px; font-weight: 600;
@@ -237,7 +241,7 @@
 }
 #welcome-actions button:hover {
   background: var(--bg-active);
-  border-color: var(--accent);
+  border-color: var(--ft-blue);
 }
 #welcome-hint { font-size: 11px; color: var(--text-tertiary); }
 
@@ -307,14 +311,14 @@ body.drag-over::after {
   content: 'Drop files here';
   position: fixed;
   inset: 0;
-  background: rgba(167,139,250,0.08);
-  border: 2px dashed var(--accent);
+  background: rgba(43, 174, 228, 0.08);
+  border: 2px dashed var(--ft-blue);
   border-radius: var(--radius-lg);
   display: flex;
   align-items: center;
   justify-content: center;
   font-size: 18px;
-  color: var(--accent);
+  color: var(--ft-blue);
   z-index: 9999;
   pointer-events: none;
 }
@@ -349,11 +353,12 @@ mark.sv-highlight.current {
 #modal-logo {
   width: 48px; height: 48px;
   border-radius: 12px;
-  background: var(--accent-dim);
+  background: var(--ft-gradient);
   border: 1px solid var(--border-strong);
   display: flex; align-items: center; justify-content: center;
-  font-size: 16px; font-weight: 700; color: var(--accent);
+  font-size: 16px; font-weight: 700; color: #fff;
   margin: 0 auto 14px;
+  box-shadow: 0 4px 12px rgba(43, 174, 228, 0.2);
 }
 #modal-about h2 { font-size: 18px; color: var(--text-primary); margin-bottom: 4px; }
 #modal-version  { font-size: 11px; color: var(--text-tertiary); margin-bottom: 10px; }
