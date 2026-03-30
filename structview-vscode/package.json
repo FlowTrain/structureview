@@ -1,0 +1,133 @@
+{
+  "name": "structview",
+  "displayName": "StructView",
+  "description": "Clean document-style preview for Markdown and JSON — part of the FlowTrain toolchain",
+  "version": "0.1.0",
+  "publisher": "FlowTrain",
+  "author": {
+    "name": "James Gifford",
+    "url": "https://github.com/FlowTrain"
+  },
+  "license": "MIT",
+  "icon": "media/icon.png",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/FlowTrain/structureview"
+  },
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "categories": [
+    "Visualization",
+    "Other"
+  ],
+  "keywords": [
+    "markdown",
+    "json",
+    "preview",
+    "viewer",
+    "structured output",
+    "ai",
+    "flowtrain"
+  ],
+  "activationEvents": [
+    "onLanguage:markdown",
+    "onLanguage:json",
+    "onCommand:structview.openPreview",
+    "onCommand:structview.openPreviewToSide"
+  ],
+  "main": "./src/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "structview.openPreview",
+        "title": "StructView: Open Preview",
+        "icon": "$(open-preview)"
+      },
+      {
+        "command": "structview.openPreviewToSide",
+        "title": "StructView: Open Preview to Side",
+        "icon": "$(open-preview)"
+      },
+      {
+        "command": "structview.toggleRaw",
+        "title": "StructView: Toggle Raw Source"
+      },
+      {
+        "command": "structview.refresh",
+        "title": "StructView: Refresh Preview"
+      }
+    ],
+    "menus": {
+      "editor/title": [
+        {
+          "command": "structview.openPreviewToSide",
+          "when": "editorLangId == markdown || editorLangId == json",
+          "group": "navigation"
+        }
+      ],
+      "editor/context": [
+        {
+          "command": "structview.openPreview",
+          "when": "editorLangId == markdown || editorLangId == json",
+          "group": "structview"
+        }
+      ],
+      "explorer/context": [
+        {
+          "command": "structview.openPreview",
+          "when": "resourceExtname == .md || resourceExtname == .json",
+          "group": "structview"
+        }
+      ]
+    },
+    "keybindings": [
+      {
+        "command": "structview.openPreviewToSide",
+        "key": "ctrl+shift+v",
+        "mac": "cmd+shift+v",
+        "when": "editorLangId == markdown || editorLangId == json"
+      },
+      {
+        "command": "structview.toggleRaw",
+        "key": "ctrl+`",
+        "when": "structview.previewActive"
+      }
+    ],
+    "configuration": {
+      "title": "StructView",
+      "properties": {
+        "structview.autoPreview": {
+          "type": "boolean",
+          "default": false,
+          "description": "Automatically open preview when a Markdown or JSON file is opened"
+        },
+        "structview.syncScroll": {
+          "type": "boolean",
+          "default": true,
+          "description": "Sync scroll position between editor and preview"
+        },
+        "structview.defaultView": {
+          "type": "string",
+          "enum": ["rendered", "raw"],
+          "default": "rendered",
+          "description": "Default view mode when opening a preview"
+        },
+        "structview.jsonAutoCollapse": {
+          "type": "boolean",
+          "default": true,
+          "description": "Auto-collapse large JSON objects and arrays in the tree view"
+        }
+      }
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "echo 'No build step required'",
+    "package": "vsce package",
+    "publish": "vsce publish"
+  },
+  "devDependencies": {
+    "@types/vscode": "^1.85.0",
+    "@vscode/vsce": "^2.22.0"
+  }
+}

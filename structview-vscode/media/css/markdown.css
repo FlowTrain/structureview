@@ -1,0 +1,174 @@
+/* ─── Markdown document rendering ──────────────────────────────
+   Applied to #doc-content when viewing .md files.
+   The goal: feel like a well-typeset document, not a web page.
+──────────────────────────────────────────────────────────────── */
+
+.doc-md { font-family: var(--font-doc); color: var(--text-primary); }
+
+/* Headings */
+.doc-md h1 {
+  font-size: 2em;
+  font-weight: 700;
+  line-height: 1.25;
+  margin: 0 0 0.25em;
+  color: var(--text-primary);
+  letter-spacing: -0.02em;
+}
+.doc-md h2 {
+  font-size: 1.4em;
+  font-weight: 600;
+  line-height: 1.3;
+  margin: 1.8em 0 0.4em;
+  color: var(--text-primary);
+  padding-bottom: 0.25em;
+  border-bottom: 1px solid var(--border);
+}
+.doc-md h3 { font-size: 1.15em; font-weight: 600; margin: 1.4em 0 0.3em; }
+.doc-md h4 { font-size: 1em;    font-weight: 600; margin: 1.2em 0 0.25em; color: var(--text-secondary); }
+.doc-md h5,
+.doc-md h6 { font-size: 0.9em;  font-weight: 600; margin: 1em 0 0.2em;   color: var(--text-tertiary); }
+
+/* Paragraphs & body */
+.doc-md p {
+  font-size: 1rem;
+  line-height: 1.8;
+  margin: 0 0 1em;
+  color: var(--text-primary);
+}
+.doc-md > p:first-child { margin-top: 0.2em; }
+
+/* Links */
+.doc-md a {
+  color: var(--text-link);
+  text-decoration: none;
+  border-bottom: 1px solid rgba(126,184,247,0.3);
+  transition: border-color var(--t-fast), color var(--t-fast);
+}
+.doc-md a:hover { color: #a8d4ff; border-bottom-color: #a8d4ff; }
+
+/* Lists */
+.doc-md ul, .doc-md ol {
+  margin: 0 0 1em 1.4em;
+  line-height: 1.8;
+}
+.doc-md li { margin-bottom: 0.2em; }
+.doc-md li > p { margin-bottom: 0.4em; }
+.doc-md ul { list-style-type: disc; }
+.doc-md ol { list-style-type: decimal; }
+
+/* Blockquote */
+.doc-md blockquote {
+  margin: 1.2em 0;
+  padding: 0.6em 1em 0.6em 1.2em;
+  border-left: 3px solid var(--accent);
+  background: var(--accent-glow);
+  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+}
+.doc-md blockquote p {
+  color: var(--text-secondary);
+  font-style: italic;
+  margin: 0;
+}
+
+/* Inline code */
+.doc-md code {
+  font-family: var(--font-mono);
+  font-size: 0.82em;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 0.1em 0.4em;
+  color: var(--text-accent);
+}
+
+/* Code blocks */
+.doc-md pre {
+  margin: 1.2em 0;
+  border-radius: var(--radius-md);
+  background: var(--bg-elevated) !important;
+  border: 1px solid var(--border);
+  overflow-x: auto;
+}
+.doc-md pre code {
+  font-family: var(--font-mono);
+  font-size: 0.82em;
+  background: none;
+  border: none;
+  padding: 0;
+  color: var(--text-primary);
+  display: block;
+  padding: 16px 18px;
+  line-height: 1.6;
+}
+
+/* Horizontal rule */
+.doc-md hr {
+  border: none;
+  border-top: 1px solid var(--border-strong);
+  margin: 2em 0;
+}
+
+/* Tables */
+.doc-md table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 1.2em 0;
+  font-size: 0.9em;
+  font-family: var(--font-ui);
+}
+.doc-md th {
+  background: var(--bg-elevated);
+  color: var(--text-secondary);
+  font-weight: 600;
+  text-align: left;
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--border-strong);
+  font-size: 0.85em;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+.doc-md td {
+  padding: 7px 12px;
+  border-bottom: 1px solid var(--border);
+  color: var(--text-primary);
+  vertical-align: top;
+}
+.doc-md tr:last-child td { border-bottom: none; }
+.doc-md tr:hover td { background: var(--bg-hover); }
+
+/* Images */
+.doc-md img {
+  max-width: 100%;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border);
+  margin: 0.5em 0;
+}
+
+/* Task lists (GFM) */
+.doc-md input[type="checkbox"] {
+  margin-right: 6px;
+  accent-color: var(--accent);
+}
+
+/* Doc meta line (injected by renderer) */
+.doc-meta {
+  font-family: var(--font-ui);
+  font-size: 11px;
+  color: var(--text-tertiary);
+  margin-bottom: 2em;
+  display: flex;
+  gap: 14px;
+  align-items: center;
+  padding-bottom: 1em;
+  border-bottom: 1px solid var(--border);
+}
+.doc-meta-badge {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  padding: 2px 6px;
+  border-radius: 3px;
+  text-transform: uppercase;
+}
+.doc-meta-badge.md   { background: rgba(126,184,247,0.15); color: var(--color-md); }
+.doc-meta-badge.json { background: rgba(240,184,110,0.15); color: var(--color-json); }

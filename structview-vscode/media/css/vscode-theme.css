@@ -1,0 +1,227 @@
+/* ─── VS Code Theme Bridge ──────────────────────────────────────
+   Maps VS Code's built-in CSS variables to the tokens our shared
+   renderer modules expect. Light, dark, and high-contrast themes
+   all work automatically — no media queries needed.
+──────────────────────────────────────────────────────────────── */
+
+:root {
+  /* Map our tokens to VS Code's variables */
+  --bg-app:        var(--vscode-editor-background);
+  --bg-elevated:   var(--vscode-editorWidget-background, var(--vscode-editor-background));
+  --bg-hover:      var(--vscode-list-hoverBackground);
+  --bg-active:     var(--vscode-list-activeSelectionBackground);
+
+  --border:        var(--vscode-widget-border, rgba(128,128,128,0.2));
+  --border-strong: var(--vscode-contrastBorder, rgba(128,128,128,0.35));
+
+  --text-primary:   var(--vscode-editor-foreground);
+  --text-secondary: var(--vscode-descriptionForeground);
+  --text-tertiary:  var(--vscode-disabledForeground);
+  --text-accent:    var(--vscode-textLink-activeForeground, var(--vscode-textLink-foreground));
+  --text-link:      var(--vscode-textLink-foreground);
+
+  --accent:         var(--vscode-focusBorder);
+  --accent-dim:     color-mix(in srgb, var(--vscode-focusBorder) 15%, transparent);
+  --accent-glow:    color-mix(in srgb, var(--vscode-focusBorder) 8%, transparent);
+
+  --color-md:       var(--vscode-textLink-foreground);
+  --color-json:     var(--vscode-charts-yellow, #d4a017);
+  --color-success:  var(--vscode-charts-green, #4caf50);
+  --color-danger:   var(--vscode-errorForeground);
+
+  --font-ui:        var(--vscode-font-family);
+  --font-doc:       var(--vscode-editor-font-family, Georgia, serif);
+  --font-mono:      var(--vscode-editor-font-family);
+
+  --radius-sm:  3px;
+  --radius-md:  5px;
+  --radius-lg:  8px;
+
+  --toolbar-h:  36px;
+  --t-fast:     80ms ease;
+}
+
+/* ─── Reset ─────────────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+html, body {
+  height: 100%;
+  background: var(--vscode-editor-background);
+  color: var(--vscode-editor-foreground);
+  font-family: var(--vscode-font-family);
+  font-size: var(--vscode-font-size, 13px);
+  line-height: 1.5;
+  overflow: hidden;
+}
+
+/* ─── Scrollbars ─────────────────────────────────────────────── */
+::-webkit-scrollbar        { width: 8px; height: 8px; }
+::-webkit-scrollbar-track  { background: transparent; }
+::-webkit-scrollbar-thumb  { background: var(--vscode-scrollbarSlider-background); border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background: var(--vscode-scrollbarSlider-hoverBackground); }
+
+/* ─── Toolbar ────────────────────────────────────────────────── */
+#toolbar {
+  height: var(--toolbar-h);
+  display: flex;
+  align-items: center;
+  padding: 0 12px;
+  gap: 8px;
+  border-bottom: 1px solid var(--vscode-panel-border, var(--border));
+  background: var(--vscode-editor-background);
+  flex-shrink: 0;
+}
+#toolbar-filename {
+  flex: 1;
+  font-size: 12px;
+  color: var(--text-secondary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+#toolbar-right { display: flex; gap: 4px; }
+
+#toolbar button {
+  background: none;
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  color: var(--vscode-icon-foreground);
+  font-size: 14px;
+  width: 26px; height: 26px;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer;
+  transition: background var(--t-fast), border-color var(--t-fast);
+}
+#toolbar button:hover {
+  background: var(--vscode-toolbar-hoverBackground);
+  border-color: var(--vscode-toolbar-hoverOutline, transparent);
+}
+#toolbar button.active {
+  color: var(--vscode-textLink-foreground);
+  background: var(--accent-dim);
+}
+
+/* ─── Search bar ─────────────────────────────────────────────── */
+#search-bar {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 12px;
+  background: var(--vscode-editorWidget-background, var(--vscode-editor-background));
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+#search-input {
+  width: 200px;
+  height: 24px;
+  background: var(--vscode-input-background);
+  border: 1px solid var(--vscode-input-border, var(--border));
+  border-radius: var(--radius-sm);
+  color: var(--vscode-input-foreground);
+  font-family: var(--vscode-font-family);
+  font-size: 12px;
+  padding: 0 8px;
+  outline: none;
+}
+#search-input:focus { border-color: var(--vscode-focusBorder); }
+#search-input::placeholder { color: var(--vscode-input-placeholderForeground); }
+#search-count { font-size: 11px; color: var(--text-tertiary); min-width: 60px; }
+#search-bar button {
+  background: none;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text-secondary);
+  font-size: 12px;
+  padding: 2px 6px;
+  cursor: pointer;
+  transition: background var(--t-fast);
+}
+#search-bar button:hover { background: var(--vscode-toolbar-hoverBackground); }
+
+/* ─── Doc scroll area ────────────────────────────────────────── */
+#doc-scroll {
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 32px 48px;
+  height: calc(100vh - var(--toolbar-h));
+}
+#doc-content {
+  max-width: 740px;
+  margin: 0 auto;
+  user-select: text;
+}
+
+/* ─── Search highlights ──────────────────────────────────────── */
+mark.sv-highlight {
+  background: var(--vscode-editor-findMatchHighlightBackground, rgba(255,200,0,0.3));
+  color: inherit;
+  border-radius: 2px;
+  padding: 0 1px;
+}
+mark.sv-highlight.current {
+  background: var(--vscode-editor-findMatchBackground, rgba(255,200,0,0.7));
+  color: var(--vscode-editor-background);
+}
+
+/* ─── Raw source view ────────────────────────────────────────── */
+.doc-raw {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  line-height: 1.65;
+  color: var(--text-secondary);
+  white-space: pre-wrap;
+  word-break: break-all;
+}
+
+/* ─── Error state ────────────────────────────────────────────── */
+.sv-error {
+  padding: 20px;
+  color: var(--vscode-errorForeground);
+  font-size: 13px;
+}
+
+/* ─── Markdown overrides for VS Code ─────────────────────────── */
+.doc-md a {
+  color: var(--text-link);
+  border-bottom-color: color-mix(in srgb, var(--text-link) 40%, transparent);
+}
+.doc-md code {
+  background: var(--vscode-textCodeBlock-background, var(--bg-elevated));
+  border-color: var(--border);
+  color: var(--text-accent);
+}
+.doc-md pre {
+  background: var(--vscode-textCodeBlock-background, var(--bg-elevated)) !important;
+  border-color: var(--border);
+}
+.doc-md blockquote {
+  border-left-color: var(--vscode-textBlockQuote-border, var(--accent));
+  background: var(--vscode-textBlockQuote-background, var(--accent-glow));
+}
+.doc-md th {
+  background: var(--vscode-editorGutter-background, var(--bg-elevated));
+  color: var(--text-secondary);
+  border-bottom-color: var(--border-strong);
+}
+.doc-md td { border-bottom-color: var(--border); }
+.doc-md tr:hover td { background: var(--vscode-list-hoverBackground); }
+
+/* ─── JSON overrides for VS Code ─────────────────────────────── */
+.json-key    { color: var(--vscode-symbolIcon-propertyForeground, #c8b4f0); }
+.json-string { color: var(--vscode-debugTokenExpression-string, #86efac); }
+.json-number { color: var(--vscode-debugTokenExpression-number, #fcd34d); }
+.json-toggle {
+  border-color: var(--border-strong);
+  color: var(--text-tertiary);
+}
+.json-toggle:hover { background: var(--vscode-toolbar-hoverBackground); }
+.json-children { border-left-color: var(--border); }
+.json-row:hover { background: var(--vscode-list-hoverBackground); }
+
+/* ─── Doc meta ───────────────────────────────────────────────── */
+.doc-meta {
+  border-bottom-color: var(--border);
+  color: var(--text-tertiary);
+}
+.doc-meta-badge.md   { background: var(--accent-dim); color: var(--text-link); }
+.doc-meta-badge.json { background: color-mix(in srgb, var(--color-json) 15%, transparent); color: var(--color-json); }

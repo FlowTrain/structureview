@@ -1,0 +1,127 @@
+/* ─── Design tokens ─────────────────────────────────────────── */
+:root {
+  /* Surfaces */
+  --bg-app:        #0f0f0f;
+  --bg-sidebar:    #141414;
+  --bg-tabs:       #111111;
+  --bg-content:    #0f0f0f;
+  --bg-elevated:   #1a1a1a;
+  --bg-hover:      #1e1e1e;
+  --bg-active:     #242424;
+  --bg-input:      #1a1a1a;
+
+  /* Borders */
+  --border:        rgba(255,255,255,0.07);
+  --border-strong: rgba(255,255,255,0.12);
+
+  /* Text */
+  --text-primary:   #e8e8e2;
+  --text-secondary: #888882;
+  --text-tertiary:  #55554e;
+  --text-accent:    #c8b4f0;   /* soft lavender accent */
+  --text-link:      #7eb8f7;
+
+  /* Accent */
+  --accent:         #a78bfa;   /* violet-400 */
+  --accent-dim:     rgba(167,139,250,0.15);
+  --accent-glow:    rgba(167,139,250,0.06);
+
+  /* Semantic */
+  --color-md:       #7eb8f7;
+  --color-json:     #f0b86e;
+  --color-success:  #6ee7b7;
+  --color-danger:   #f87171;
+
+  /* Layout */
+  --sidebar-width:  220px;
+  --titlebar-h:     36px;
+  --tabbar-h:       38px;
+  --toolbar-h:      38px;
+  --radius-sm:      4px;
+  --radius-md:      6px;
+  --radius-lg:      10px;
+
+  /* Typography */
+  --font-ui:        'Segoe UI', system-ui, -apple-system, sans-serif;
+  --font-doc:       'Georgia', 'Times New Roman', serif;
+  --font-mono:      'Cascadia Code', 'Fira Code', 'Consolas', monospace;
+
+  /* Transitions */
+  --t-fast:  80ms ease;
+  --t-med:   150ms ease;
+}
+
+/* ─── Reset ────────────────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+html, body {
+  height: 100%;
+  overflow: hidden;
+  background: var(--bg-app);
+  color: var(--text-primary);
+  font-family: var(--font-ui);
+  font-size: 13px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  user-select: none;
+}
+
+/* ─── Scrollbars ───────────────────────────────────────────────── */
+::-webkit-scrollbar        { width: 6px; height: 6px; }
+::-webkit-scrollbar-track  { background: transparent; }
+::-webkit-scrollbar-thumb  { background: rgba(255,255,255,0.1); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.18); }
+
+/* ─── Focus ring ───────────────────────────────────────────────── */
+:focus-visible {
+  outline: 1.5px solid var(--accent);
+  outline-offset: 1px;
+  border-radius: var(--radius-sm);
+}
+
+/* ─── Icon buttons ─────────────────────────────────────────────── */
+.icon-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  padding: 0;
+  background: none;
+  border: none;
+  border-radius: var(--radius-sm);
+  color: var(--text-secondary);
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: background var(--t-fast), color var(--t-fast);
+}
+.icon-btn svg { width: 14px; height: 14px; fill: currentColor; pointer-events: none; }
+.icon-btn:hover  { background: var(--bg-hover); color: var(--text-primary); }
+.icon-btn:active { background: var(--bg-active); }
+.icon-btn.active { color: var(--accent); }
+
+/* ─── Text inputs ──────────────────────────────────────────────── */
+input[type="text"] {
+  background: var(--bg-input);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text-primary);
+  font-family: var(--font-ui);
+  font-size: 12px;
+  height: 26px;
+  padding: 0 8px;
+  width: 100%;
+  transition: border-color var(--t-fast);
+}
+input[type="text"]::placeholder { color: var(--text-tertiary); }
+input[type="text"]:focus { outline: none; border-color: var(--accent); }
+
+/* ─── Buttons ──────────────────────────────────────────────────── */
+button {
+  font-family: var(--font-ui);
+  cursor: pointer;
+}
+
+/* ─── Drag region (macOS titlebar) ─────────────────────────────── */
+#titlebar { -webkit-app-region: drag; }
+.icon-btn, input, button { -webkit-app-region: no-drag; }
