@@ -6,50 +6,50 @@
 
 window.MDRenderer = (() => {
 
-  function configure() {
-    if (!window.marked || !window.hljs) return;
+  let configured = false;
 
-    marked.setOptions({
+  function configure() {
+    if (configured || !window.marked || !window.hljs) return;
+    configured = true;
+
+    // marked v5+ API: pass options and renderer together via marked.use()
+    marked.use({
       gfm: true,
       breaks: false,
       pedantic: false,
+      renderer: {
+        // Open external links in the OS browser (token-based API)
+        link({ href, title, text }) {
+          const safe = escapeAttr(href || '');
+          const t    = title ? ` title="${escapeAttr(title)}"` : '';
+          return `<a href="${safe}"${t} class="sv-external-link">${text}</a>`;
+        },
+
+        // Syntax-highlighted code blocks
+        code({ text: rawCode, lang }) {
+          let highlighted = escapeHtml(rawCode);
+          if (lang && hljs.getLanguage(lang)) {
+            try { highlighted = hljs.highlight(rawCode, { language: lang }).value; }
+            catch {}
+          } else {
+            try { highlighted = hljs.highlightAuto(rawCode).value; }
+            catch {}
+          }
+          const langLabel = lang
+            ? `<span class="code-lang-label">${escapeHtml(lang)}</span>`
+            : '';
+          return `<pre>${langLabel}<code class="hljs language-${escapeAttr(lang || '')}">${highlighted}</code></pre>`;
+        },
+
+        // Task list items
+        listitem({ text, task, checked }) {
+          if (task) {
+            return `<li><input type="checkbox" ${checked ? 'checked' : ''} disabled> ${text}</li>\n`;
+          }
+          return `<li>${text}</li>\n`;
+        },
+      },
     });
-
-    // Custom renderer
-    const renderer = new marked.Renderer();
-
-    // Open external links in the OS browser
-    renderer.link = (href, title, text) => {
-      const safe = escapeAttr(href || '');
-      const t    = title ? ` title="${escapeAttr(title)}"` : '';
-      return `<a href="${safe}"${t} class="sv-external-link">${text}</a>`;
-    };
-
-    // Syntax-highlighted code blocks
-    renderer.code = (code, lang) => {
-      let highlighted = code;
-      if (lang && hljs.getLanguage(lang)) {
-        try { highlighted = hljs.highlight(code, { language: lang }).value; }
-        catch {}
-      } else {
-        try { highlighted = hljs.highlightAuto(code).value; }
-        catch {}
-      }
-      const langLabel = lang
-        ? `<span class="code-lang-label">${escapeHtml(lang)}</span>`
-        : '';
-      return `<pre>${langLabel}<code class="hljs language-${escapeAttr(lang || '')}">${highlighted}</code></pre>`;
-    };
-
-    // Task list items
-    renderer.listitem = (text, task, checked) => {
-      if (task) {
-        return `<li><input type="checkbox" ${checked ? 'checked' : ''} disabled> ${text}</li>\n`;
-      }
-      return `<li>${text}</li>\n`;
-    };
-
-    marked.use({ renderer });
   }
 
   function render(raw, meta) {
