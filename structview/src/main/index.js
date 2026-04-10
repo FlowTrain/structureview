@@ -21,7 +21,7 @@ function createWindow() {
     minHeight: 500,
     backgroundColor: '#0f0f0f',
     titleBarStyle: process.platform === 'darwin' ? 'hiddenInset' : 'default',
-    frame: process.platform !== 'win32',
+    frame: true,
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
       contextIsolation: true,
@@ -35,7 +35,7 @@ function createWindow() {
 
   mainWindow.once('ready-to-show', () => {
     mainWindow.show();
-    if (isDev) mainWindow.webContents.openDevTools();
+    mainWindow.webContents.openDevTools();
   });
 
   mainWindow.on('closed', () => { mainWindow = null; });
@@ -121,10 +121,12 @@ async function openFolderDialog() {
 }
 
 function loadFile(filePath) {
+  console.log('[loadFile] path:', filePath);
   try {
     const content = fs.readFileSync(filePath, 'utf8');
     const stat = fs.statSync(filePath);
     const ext = path.extname(filePath).toLowerCase().slice(1);
+    console.log('[loadFile] success, ext:', ext, 'size:', stat.size);
     mainWindow.webContents.send('file-loaded', {
       filePath,
       name: path.basename(filePath),
@@ -135,6 +137,7 @@ function loadFile(filePath) {
     });
     watchFile(filePath);
   } catch (err) {
+    console.error('[loadFile] error:', err.message);
     mainWindow.webContents.send('file-error', { filePath, message: err.message });
   }
 }

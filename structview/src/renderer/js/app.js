@@ -16,16 +16,18 @@
   // ── IPC: file events from main process ───────────────────────
 
   sv.onFileLoaded((data) => {
+    console.log('[onFileLoaded] received:', data.filePath, 'ext:', data.ext, 'content length:', data.content?.length);
     Sidebar.addFile(data);
     Tabs.open(data);
   });
 
   sv.onFileChanged(({ filePath, content }) => {
+    console.log('[onFileChanged]', filePath);
     Tabs.updateContent(filePath, content);
   });
 
   sv.onFileError(({ filePath, message }) => {
-    console.error(`File error [${filePath}]: ${message}`);
+    console.error('[onFileError]', filePath, message);
   });
 
   sv.onFolderScanned(({ folderPath, files }) => {
@@ -78,19 +80,26 @@
   async function showAboutModal() {
     const overlay = document.getElementById('modal-overlay');
     const ver     = document.getElementById('modal-version');
-    const v = await sv.getAppVersion();
-    ver.textContent = `Version ${v}`;
-    overlay.hidden  = false;
+    try {
+      const v = await sv.getAppVersion();
+      ver.textContent = `Version ${v}`;
+    } catch {
+      ver.textContent = 'Version 0.1.0';
+    }
+    overlay.hidden = false;
   }
 
-  document.getElementById('modal-close').addEventListener('click', () => {
+  document.getElementById('modal-close').addEventListener('click', (e) => {
+    e.stopPropagation();
     document.getElementById('modal-overlay').hidden = true;
   });
 
-  document.getElementById('modal-overlay').addEventListener('click', (e) => {
-    if (e.target === e.currentTarget) {
-      e.currentTarget.hidden = true;
-    }
+  document.getElementById('modal-about').addEventListener('click', (e) => {
+    e.stopPropagation();
+  });
+
+  document.getElementById('modal-overlay').addEventListener('click', () => {
+    document.getElementById('modal-overlay').hidden = true;
   });
 
   // ── Keyboard shortcuts ───────────────────────────────────────

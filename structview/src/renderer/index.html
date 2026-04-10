@@ -4,125 +4,533 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta http-equiv="Content-Security-Policy"
-    content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:;" />
-  <title>StructView</title>
-  <link rel="stylesheet" href="css/theme.css" />
-  <link rel="stylesheet" href="css/layout.css" />
-  <link rel="stylesheet" href="css/markdown.css" />
-  <link rel="stylesheet" href="css/json.css" />
-  <link rel="stylesheet" href="css/hljs-theme.css" />
+    content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://api.fontshare.com; font-src 'self' https://api.fontshare.com https://cdn.fontshare.com; img-src 'self' data:;" />
+  <title>StructureView</title>
+  <style>
+    @import url('https://api.fontshare.com/v2/css?f[]=cabinet-grotesk@400,500,700,800&display=swap');
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg:         #0a0a0f;
+      --bg-sidebar: #12121a;
+      --bg-tabs:    #0f0f16;
+      --bg-raised:  #1a1a26;
+      --bg-hover:   #1a1a26;
+      --border:     rgba(255,255,255,0.07);
+      --text:       #e2e2f0;
+      --text-2:     #8080a8;
+      --text-3:     #44445a;
+      --accent:     #2BAEE4;
+      --color-md:   #2BAEE4;
+      --color-json: #F0C050;
+      --color-warn: #D44030;
+      --font-ui:    'Cabinet Grotesk', 'Helvetica Neue', system-ui, sans-serif;
+      --font-doc:   Georgia, 'Times New Roman', serif;
+      --font-mono:  'JetBrains Mono', 'Cascadia Code', 'Fira Code', monospace;
+    }
+    html, body { width:100%; height:100%; background:var(--bg); color:var(--text); font-family:var(--font-ui); font-size:13px; overflow:hidden; -webkit-font-smoothing:antialiased; }
+    ::-webkit-scrollbar { width:6px; height:6px; }
+    ::-webkit-scrollbar-track { background:transparent; }
+    ::-webkit-scrollbar-thumb { background:rgba(255,255,255,0.1); border-radius:3px; }
+    ::-webkit-scrollbar-thumb:hover { background:rgba(255,255,255,0.18); }
+
+    #app { display:flex; flex-direction:column; width:100vw; height:100vh; }
+
+    /* Titlebar */
+    #titlebar { height:36px; background:var(--bg); border-bottom:1px solid var(--border); display:flex; align-items:center; padding:0 14px; gap:10px; flex-shrink:0; -webkit-app-region:drag; }
+    #titlebar * { -webkit-app-region:no-drag; }
+    #tb-brand { font-size:12px; font-weight:600; color:var(--accent); letter-spacing:0.06em; text-transform:uppercase; }
+    #tb-file  { font-size:12px; color:var(--text-3); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; flex:1; }
+
+    /* Body */
+    #body { display:flex; flex:1; overflow:hidden; min-height:0; }
+
+    /* Sidebar */
+    #sidebar { width:220px; min-width:140px; max-width:500px; background:var(--bg-sidebar); border-right:1px solid var(--border); display:flex; flex-direction:column; overflow:hidden; flex-shrink:0; position:relative; }
+    #sidebar-toolbar { display:flex; align-items:center; gap:4px; padding:6px 8px; border-bottom:1px solid var(--border); flex-shrink:0; }
+    .icon-btn { width:26px; height:26px; background:none; border:none; border-radius:4px; color:var(--text-2); cursor:pointer; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+    .icon-btn:hover { background:var(--bg-hover); color:var(--text); }
+    .icon-btn svg { width:14px; height:14px; fill:currentColor; }
+    #sidebar-filter { flex:1; height:24px; background:var(--bg-raised); border:1px solid var(--border); border-radius:4px; color:var(--text); font-family:var(--font-ui); font-size:12px; padding:0 7px; outline:none; }
+    #sidebar-filter::placeholder { color:var(--text-3); }
+    #sidebar-filter:focus { border-color:var(--accent); }
+    #file-list { flex:1; overflow-y:auto; padding:4px 0; }
+    .file-item { display:flex; align-items:center; gap:7px; padding:5px 12px; cursor:pointer; color:var(--text-2); font-size:12px; white-space:nowrap; overflow:hidden; }
+    .file-item:hover { background:var(--bg-hover); color:var(--text); }
+    .file-item.active { background:rgba(43,174,228,0.1); color:var(--text); }
+    .file-dot { width:6px; height:6px; border-radius:50%; flex-shrink:0; }
+    .dot-md   { background:var(--color-md); }
+    .dot-json { background:var(--color-json); }
+    .file-label { overflow:hidden; text-overflow:ellipsis; flex:1; }
+    #sidebar-empty { padding:24px; text-align:center; color:var(--text-3); font-size:12px; line-height:1.8; }
+    #resize-handle { position:absolute; right:-3px; top:0; bottom:0; width:6px; cursor:col-resize; z-index:10; }
+    #resize-handle:hover { background:rgba(43,174,228,0.25); }
+
+    /* Main */
+    #main { flex:1; display:flex; flex-direction:column; overflow:hidden; min-width:0; }
+
+    /* Tabs */
+    #tab-bar { height:36px; background:var(--bg-tabs); border-bottom:1px solid var(--border); display:flex; overflow-x:auto; overflow-y:hidden; flex-shrink:0; }
+    #tab-bar::-webkit-scrollbar { height:0; }
+    .tab { display:flex; align-items:center; gap:6px; height:100%; padding:0 12px; border:none; border-right:1px solid var(--border); border-top:2px solid transparent; background:none; color:var(--text-3); font-family:var(--font-ui); font-size:12px; cursor:pointer; white-space:nowrap; max-width:180px; flex-shrink:0; }
+    .tab:hover { background:var(--bg-hover); color:var(--text-2); }
+    .tab.active { background:var(--bg); color:var(--text); border-top-color:var(--accent); }
+    .tab-dot { width:5px; height:5px; border-radius:50%; flex-shrink:0; }
+    .tab-name { overflow:hidden; text-overflow:ellipsis; flex:1; text-align:left; }
+    .tab-x { width:14px; height:14px; border:none; border-radius:3px; background:none; color:var(--text-3); font-size:11px; cursor:pointer; padding:0; line-height:1; opacity:0; flex-shrink:0; display:flex; align-items:center; justify-content:center; }
+    .tab:hover .tab-x, .tab.active .tab-x { opacity:1; }
+    .tab-x:hover { background:rgba(255,255,255,0.1); color:var(--text); }
+
+    /* Content */
+    #content { flex:1; overflow:hidden; display:flex; flex-direction:column; min-height:0; }
+
+    /* Welcome */
+    #welcome { flex:1; display:flex; align-items:center; justify-content:center; flex-direction:column; }
+    #welcome-logo { width:56px; height:56px; border-radius:14px; background:rgba(43,174,228,0.12); border:1px solid rgba(43,174,228,0.25); display:flex; align-items:center; justify-content:center; font-size:18px; font-weight:800; color:var(--accent); margin-bottom:16px; letter-spacing:0.02em; }
+    #welcome h1 { font-size:22px; font-weight:600; margin-bottom:8px; }
+    #welcome > p { font-size:13px; color:var(--text-2); margin-bottom:24px; }
+    #welcome-btns { display:flex; gap:10px; margin-bottom:14px; }
+    #welcome-btns button { background:var(--bg-raised); border:1px solid rgba(255,255,255,0.12); border-radius:6px; color:var(--text); font-family:var(--font-ui); font-size:13px; padding:8px 18px; cursor:pointer; }
+    #welcome-btns button:hover { border-color:var(--accent); }
+    #welcome-hint { font-size:11px; color:var(--text-3); }
+
+    /* Viewer toolbar */
+    #viewer-toolbar { height:36px; display:flex; align-items:center; padding:0 12px; gap:8px; border-bottom:1px solid var(--border); flex-shrink:0; }
+    #viewer-path { flex:1; font-size:11px; color:var(--text-3); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+
+    /* Search bar */
+    #search-bar { display:flex; align-items:center; gap:6px; padding:5px 12px; background:var(--bg-raised); border-bottom:1px solid var(--border); flex-shrink:0; }
+    #search-input { width:200px; height:24px; background:var(--bg); border:1px solid var(--border); border-radius:4px; color:var(--text); font-family:var(--font-ui); font-size:12px; padding:0 8px; outline:none; }
+    #search-input:focus { border-color:var(--accent); }
+    #search-count { font-size:11px; color:var(--text-3); min-width:60px; }
+    #search-bar button { background:none; border:1px solid var(--border); border-radius:4px; color:var(--text-2); font-size:12px; padding:1px 6px; cursor:pointer; }
+    #search-bar button:hover { background:var(--bg-hover); color:var(--text); }
+
+    /* Doc */
+    #doc-scroll { flex:1; overflow-y:auto; overflow-x:hidden; padding:40px 48px; min-height:0; }
+    #doc-content { max-width:740px; margin:0 auto; user-select:text; }
+
+    /* Markdown */
+    .doc-md { font-family:var(--font-doc); }
+    .doc-md h1 { font-size:2em; font-weight:700; color:var(--text); margin:0 0 0.3em; line-height:1.25; }
+    .doc-md h2 { font-size:1.4em; font-weight:600; color:var(--text); margin:1.8em 0 0.4em; padding-bottom:0.25em; border-bottom:1px solid var(--border); }
+    .doc-md h3 { font-size:1.15em; font-weight:600; margin:1.4em 0 0.3em; }
+    .doc-md h4,.doc-md h5,.doc-md h6 { font-size:1em; font-weight:600; margin:1em 0 0.2em; color:var(--text-2); }
+    .doc-md p { font-size:1rem; line-height:1.8; margin:0 0 1em; color:var(--text); }
+    .doc-md a { color:var(--color-md); text-decoration:none; border-bottom:1px solid rgba(126,184,247,0.3); }
+    .doc-md a:hover { color:#a8d4ff; }
+    .doc-md ul,.doc-md ol { margin:0 0 1em 1.4em; line-height:1.8; }
+    .doc-md li { margin-bottom:0.2em; }
+    .doc-md blockquote { margin:1.2em 0; padding:0.6em 1em 0.6em 1.2em; border-left:3px solid var(--accent); background:rgba(167,139,250,0.05); border-radius:0 4px 4px 0; }
+    .doc-md blockquote p { color:var(--text-2); font-style:italic; margin:0; }
+    .doc-md code { font-family:var(--font-mono); font-size:0.82em; background:var(--bg-raised); border:1px solid var(--border); border-radius:4px; padding:0.1em 0.4em; color:#c8b4f0; }
+    .doc-md pre { margin:1.2em 0; border-radius:6px; background:var(--bg-raised) !important; border:1px solid var(--border); overflow-x:auto; }
+    .doc-md pre code { font-family:var(--font-mono); font-size:0.82em; background:none; border:none; padding:16px 18px; color:var(--text); display:block; line-height:1.6; }
+    .doc-md hr { border:none; border-top:1px solid var(--border); margin:2em 0; }
+    .doc-md table { width:100%; border-collapse:collapse; margin:1.2em 0; font-size:0.9em; font-family:var(--font-ui); }
+    .doc-md th { background:var(--bg-raised); color:var(--text-2); font-weight:600; text-align:left; padding:8px 12px; border-bottom:1px solid rgba(255,255,255,0.12); font-size:0.85em; text-transform:uppercase; }
+    .doc-md td { padding:7px 12px; border-bottom:1px solid var(--border); vertical-align:top; }
+    .doc-md tr:last-child td { border-bottom:none; }
+    .doc-md tr:hover td { background:var(--bg-hover); }
+    .doc-md img { max-width:100%; border-radius:6px; border:1px solid var(--border); }
+
+    /* JSON */
+    .doc-json { font-family:var(--font-mono); font-size:13px; line-height:1.7; }
+    .jk { color:#F0C050; font-weight:500; }
+    .js { color:#86efac; }
+    .jn { color:#fcd34d; }
+    .jb { color:#f9a8d4; }
+    .jnull { color:var(--text-3); font-style:italic; }
+    .jbrace { color:var(--text-2); }
+    .j-toggle { display:inline-flex; align-items:center; justify-content:center; width:14px; height:14px; background:none; border:1px solid rgba(255,255,255,0.15); border-radius:3px; color:var(--text-3); font-size:9px; cursor:pointer; margin-right:4px; vertical-align:middle; font-family:var(--font-ui); padding:0; }
+    .j-toggle:hover { background:var(--bg-hover); color:var(--text); }
+    .j-children { padding-left:20px; border-left:1px solid var(--border); margin-left:6px; }
+    .j-preview { color:var(--text-3); font-size:0.88em; font-style:italic; margin-left:4px; }
+    .j-row { display:block; padding:0 4px; border-radius:3px; }
+    .j-row:hover { background:var(--bg-hover); }
+    .j-comma { color:var(--text-3); }
+    .j-idx { color:var(--text-3); font-size:0.88em; margin-right:8px; }
+    .j-error { padding:20px; background:rgba(248,113,113,0.06); border:1px solid rgba(248,113,113,0.2); border-radius:6px; }
+    .j-error-title { font-size:13px; font-weight:600; color:#f87171; margin-bottom:6px; }
+    .j-error-msg { font-size:12px; color:var(--text-2); margin-bottom:10px; }
+    .j-error-raw { font-family:var(--font-mono); font-size:12px; color:var(--text-2); background:var(--bg-raised); border:1px solid var(--border); border-radius:4px; padding:12px; overflow-x:auto; white-space:pre; max-height:300px; overflow-y:auto; }
+
+    /* Meta */
+    .doc-meta { font-family:var(--font-ui); font-size:11px; color:var(--text-3); margin-bottom:2em; display:flex; gap:12px; align-items:center; padding-bottom:1em; border-bottom:1px solid var(--border); }
+    .meta-badge { font-size:10px; font-weight:600; padding:2px 6px; border-radius:3px; text-transform:uppercase; letter-spacing:0.05em; }
+    .meta-badge.md   { background:rgba(126,184,247,0.15); color:var(--color-md); }
+    .meta-badge.json { background:rgba(240,184,110,0.15); color:var(--color-json); }
+
+    /* Raw */
+    .doc-raw { font-family:var(--font-mono); font-size:13px; line-height:1.65; color:var(--text-2); white-space:pre-wrap; word-break:break-all; }
+
+    /* Search highlight */
+    mark.sv-hl { background:rgba(250,204,21,0.3); color:inherit; border-radius:2px; padding:0 1px; }
+    mark.sv-hl.cur { background:rgba(250,204,21,0.75); color:#0f0f0f; }
+
+    /* Drag overlay */
+    body.dragging::after { content:'Drop files here'; position:fixed; inset:0; background:rgba(43,174,228,0.06); border:2px dashed var(--accent); border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:18px; color:var(--accent); z-index:9999; pointer-events:none; }
+
+    /* hljs */
+    .hljs { background:transparent !important; }
+    .hljs-keyword,.hljs-built_in { color:#c084fc; }
+    .hljs-string,.hljs-attr      { color:#86efac; }
+    .hljs-number,.hljs-literal   { color:#fcd34d; }
+    .hljs-comment                { color:#4b5563; font-style:italic; }
+    .hljs-variable               { color:#f9a8d4; }
+    .hljs-type,.hljs-title       { color:#7dd3fc; }
+  </style>
 </head>
 <body>
-
-  <!-- ── Title bar (Windows/Linux custom frame) ── -->
+<div id="app">
   <div id="titlebar">
-    <span id="titlebar-appname">StructView</span>
-    <span id="titlebar-filename"></span>
-    <div id="titlebar-spacer"></div>
+    <span id="tb-brand">StructureView</span>
+    <span id="tb-file"></span>
   </div>
-
-  <!-- ── Shell ── -->
-  <div id="shell">
-
-    <!-- Sidebar -->
-    <aside id="sidebar">
+  <div id="body">
+    <div id="sidebar">
       <div id="sidebar-toolbar">
-        <button class="icon-btn" id="btn-open-file"  title="Open file (Ctrl+O)">
+        <button class="icon-btn" id="btn-open-file" title="Open file (Ctrl+O)">
           <svg viewBox="0 0 16 16"><path d="M2 3.5A1.5 1.5 0 013.5 2h4.586a1 1 0 01.707.293l3.414 3.414A1 1 0 0112.5 6.5V13a1.5 1.5 0 01-1.5 1.5h-7A1.5 1.5 0 012 13V3.5zm1.5-.5a.5.5 0 00-.5.5V13a.5.5 0 00.5.5h7a.5.5 0 00.5-.5V7H9a1 1 0 01-1-1V3H3.5zm5 .621L11.379 6.5H8.5V3.621z"/></svg>
         </button>
         <button class="icon-btn" id="btn-open-folder" title="Open folder (Ctrl+Shift+O)">
           <svg viewBox="0 0 16 16"><path d="M1.5 2A1.5 1.5 0 000 3.5v9A1.5 1.5 0 001.5 14h13a1.5 1.5 0 001.5-1.5V6a1.5 1.5 0 00-1.5-1.5H8.621a.5.5 0 01-.354-.146L6.56 2.646A1.5 1.5 0 005.5 2H1.5z"/></svg>
         </button>
-        <div id="sidebar-search-wrap">
-          <input id="sidebar-search" type="text" placeholder="Filter files…" autocomplete="off" spellcheck="false" />
-        </div>
+        <input id="sidebar-filter" type="text" placeholder="Filter files…" autocomplete="off" spellcheck="false" />
       </div>
-
       <div id="file-list"></div>
-
-      <div id="sidebar-empty">
-        <p>No files open</p>
-        <p>Open a file or folder to get started</p>
-      </div>
-    </aside>
-
-    <!-- Main area -->
-    <main id="main">
-
-      <!-- Tab bar -->
+      <div id="sidebar-empty">No files open<br>Open a file or folder</div>
+      <div id="resize-handle"></div>
+    </div>
+    <div id="main">
       <div id="tab-bar"></div>
-
-      <!-- Content pane -->
-      <div id="content-area">
-
-        <!-- Welcome screen -->
+      <div id="content">
         <div id="welcome">
-          <div id="welcome-inner">
-            <div id="welcome-logo">SV</div>
-            <h1>StructView</h1>
-            <p>A clean viewer for Markdown and JSON</p>
-            <div id="welcome-actions">
-              <button id="welcome-open-file">Open file</button>
-              <button id="welcome-open-folder">Open folder</button>
-            </div>
-            <p id="welcome-hint">Or drag and drop files anywhere</p>
+          <div id="welcome-logo">SV</div>
+          <h1>StructureView</h1>
+          <p>A clean viewer for Markdown and JSON</p>
+          <div id="welcome-btns">
+            <button id="btn-welcome-file">Open file</button>
+            <button id="btn-welcome-folder">Open folder</button>
           </div>
+          <div id="welcome-hint">Or drag and drop files anywhere</div>
         </div>
-
-        <!-- Document viewer (hidden until a file is loaded) -->
-        <div id="viewer" hidden>
+        <div id="viewer" style="display:none;flex-direction:column;flex:1;min-height:0;overflow:hidden;">
           <div id="viewer-toolbar">
-            <div id="viewer-breadcrumb"></div>
-            <div id="viewer-toolbar-right">
-              <button class="icon-btn" id="btn-toggle-raw" title="Toggle raw source">
-                <svg viewBox="0 0 16 16"><path d="M5.854 4.146a.5.5 0 010 .708L2.707 8l3.147 3.146a.5.5 0 01-.708.708l-3.5-3.5a.5.5 0 010-.708l3.5-3.5a.5.5 0 01.708 0zm4.292 0a.5.5 0 000 .708L13.293 8l-3.147 3.146a.5.5 0 00.708.708l3.5-3.5a.5.5 0 000-.708l-3.5-3.5a.5.5 0 00-.708 0z"/></svg>
-              </button>
-              <button class="icon-btn" id="btn-search-in-doc" title="Search in document (Ctrl+F)">
-                <svg viewBox="0 0 16 16"><path d="M11.742 10.344a6.5 6.5 0 10-1.397 1.398h-.001c.03.04.062.078.098.115l3.85 3.85a1 1 0 001.415-1.414l-3.85-3.85a1.007 1.007 0 00-.115-.099zm-5.242 1.156a5.5 5.5 0 110-11 5.5 5.5 0 010 11z"/></svg>
-              </button>
-            </div>
+            <div id="viewer-path"></div>
+            <button class="icon-btn" id="btn-raw" title="Toggle raw (Ctrl+`)">
+              <svg viewBox="0 0 16 16"><path d="M5.854 4.146a.5.5 0 010 .708L2.707 8l3.147 3.146a.5.5 0 01-.708.708l-3.5-3.5a.5.5 0 010-.708l3.5-3.5a.5.5 0 01.708 0zm4.292 0a.5.5 0 000 .708L13.293 8l-3.147 3.146a.5.5 0 00.708.708l3.5-3.5a.5.5 0 000-.708l-3.5-3.5a.5.5 0 00-.708 0z"/></svg>
+            </button>
+            <button class="icon-btn" id="btn-search" title="Search (Ctrl+F)">
+              <svg viewBox="0 0 16 16"><path d="M11.742 10.344a6.5 6.5 0 10-1.397 1.398h-.001c.03.04.062.078.098.115l3.85 3.85a1 1 0 001.415-1.414l-3.85-3.85a1.007 1.007 0 00-.115-.099zm-5.242 1.156a5.5 5.5 0 110-11 5.5 5.5 0 010 11z"/></svg>
+            </button>
           </div>
-
-          <!-- In-doc search bar -->
-          <div id="doc-search-bar" hidden>
-            <input id="doc-search-input" type="text" placeholder="Search…" autocomplete="off" spellcheck="false" />
-            <span id="doc-search-count"></span>
-            <button id="doc-search-prev">↑</button>
-            <button id="doc-search-next">↓</button>
-            <button id="doc-search-close">✕</button>
+          <div id="search-bar" style="display:none;">
+            <input id="search-input" type="text" placeholder="Search…" autocomplete="off" spellcheck="false" />
+            <span id="search-count"></span>
+            <button id="search-prev">↑</button>
+            <button id="search-next">↓</button>
+            <button id="search-close">✕</button>
           </div>
-
-          <!-- Rendered document -->
           <div id="doc-scroll">
             <div id="doc-content"></div>
           </div>
         </div>
-
       </div>
-
-    </main>
-
-  </div>
-
-  <!-- About modal -->
-  <div id="modal-overlay" hidden>
-    <div id="modal-about">
-      <div id="modal-logo">SV</div>
-      <h2>StructView</h2>
-      <p id="modal-version"></p>
-      <p>A clean document-style viewer for Markdown and JSON files.</p>
-      <button id="modal-close">Close</button>
     </div>
   </div>
+</div>
 
-  <!-- Scripts (order matters) -->
-  <script src="js/vendor/marked.min.js"></script>
-  <script src="js/vendor/highlight.min.js"></script>
-  <script src="js/renderer/markdown.js"></script>
-  <script src="js/renderer/json.js"></script>
-  <script src="js/renderer/search.js"></script>
-  <script src="js/renderer/tabs.js"></script>
-  <script src="js/renderer/sidebar.js"></script>
-  <script src="js/app.js"></script>
+<script src="js/vendor/marked.min.js"></script>
+<script src="js/vendor/highlight.min.js"></script>
+<script>
+'use strict';
+const sv = window.structview;
+const files = new Map();
+let active = null;
+
+const elTbFile    = document.getElementById('tb-file');
+const elFileList  = document.getElementById('file-list');
+const elSideEmpty = document.getElementById('sidebar-empty');
+const elTabBar    = document.getElementById('tab-bar');
+const elWelcome   = document.getElementById('welcome');
+const elViewer    = document.getElementById('viewer');
+const elPath      = document.getElementById('viewer-path');
+const elDocCnt    = document.getElementById('doc-content');
+const elDocScr    = document.getElementById('doc-scroll');
+const elSearchBar = document.getElementById('search-bar');
+const elSearchIn  = document.getElementById('search-input');
+const elSearchCnt = document.getElementById('search-count');
+const elBtnRaw    = document.getElementById('btn-raw');
+
+// IPC
+sv.onFileLoaded(data => { addFile(data); openTab(data.filePath); });
+sv.onFileChanged(({filePath, content}) => {
+  if (!files.has(filePath)) return;
+  files.get(filePath).content = content;
+  if (active === filePath) renderContent();
+});
+sv.onFolderScanned(({files: paths}) => {
+  paths.forEach(fp => {
+    if (!files.has(fp)) {
+      const name = fp.split(/[/\\]/).pop();
+      const ext = name.split('.').pop().toLowerCase();
+      files.set(fp, {name, ext, content:null, size:0, modified:null, scroll:0, raw:false});
+    }
+  });
+  refreshSidebar();
+  if (!active && paths.length > 0) loadAndOpen(paths[0]);
+});
+sv.onShowAbout(() => showAbout());
+
+function addFile(data) {
+  files.set(data.filePath, {name:data.name, ext:data.ext, content:data.content, size:data.size, modified:data.modified, scroll:0, raw:false});
+  refreshSidebar();
+}
+
+function loadAndOpen(fp) {
+  const f = files.get(fp);
+  if (!f) return;
+  if (f.content !== null) { openTab(fp); return; }
+  sv.readFile(fp).then(r => {
+    if (r.ok) { f.content = r.content; f.size = r.size; f.modified = r.modified; openTab(fp); }
+  });
+}
+
+function openTab(fp) {
+  const f = files.get(fp);
+  if (!f) return;
+  if (active && active !== fp && files.has(active)) files.get(active).scroll = elDocScr.scrollTop;
+  active = fp;
+  if (!elTabBar.querySelector(`[data-path="${CSS.escape(fp)}"]`)) {
+    const btn = document.createElement('button');
+    btn.className = 'tab';
+    btn.dataset.path = fp;
+    btn.title = fp;
+    btn.innerHTML = `<span class="tab-dot dot-${f.ext}"></span><span class="tab-name">${esc(f.name)}</span><button class="tab-x">×</button>`;
+    btn.addEventListener('click', e => {
+      if (e.target.classList.contains('tab-x')) { e.stopPropagation(); closeTab(fp); }
+      else loadAndOpen(fp);
+    });
+    elTabBar.appendChild(btn);
+  }
+  elTabBar.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.path === fp));
+  elFileList.querySelectorAll('.file-item').forEach(el => el.classList.toggle('active', el.dataset.path === fp));
+  elTbFile.textContent = f.name;
+  renderContent();
+}
+
+function closeTab(fp) {
+  files.delete(fp);
+  const tab = elTabBar.querySelector(`[data-path="${CSS.escape(fp)}"]`);
+  if (tab) tab.remove();
+  refreshSidebar();
+  if (active === fp) {
+    active = null;
+    const remaining = [...elTabBar.querySelectorAll('.tab')];
+    if (remaining.length) loadAndOpen(remaining[remaining.length-1].dataset.path);
+    else showWelcome();
+  }
+}
+
+function renderContent() {
+  const f = active ? files.get(active) : null;
+  if (!f || f.content === null) { showWelcome(); return; }
+  elWelcome.style.display = 'none';
+  elViewer.style.display  = 'flex';
+  elPath.textContent = active;
+  elBtnRaw.style.color = f.raw ? 'var(--accent)' : '';
+  clearHighlights();
+  if (f.raw) {
+    elDocCnt.innerHTML = `<pre class="doc-raw">${esc(f.content)}</pre>`;
+  } else if (f.ext === 'md' || f.ext === 'markdown') {
+    elDocCnt.innerHTML = metaLine(f) + '<div class="doc-md">' + renderMD(f.content) + '</div>';
+    elDocCnt.querySelectorAll('a.sv-ext').forEach(a => a.addEventListener('click', e => { e.preventDefault(); sv.openExternal(a.getAttribute('href')); }));
+  } else if (f.ext === 'json') {
+    elDocCnt.innerHTML = metaLine(f) + renderJSON(f.content);
+    attachJSONToggles();
+  } else {
+    elDocCnt.innerHTML = `<pre class="doc-raw">${esc(f.content)}</pre>`;
+  }
+  setTimeout(() => { elDocScr.scrollTop = f.scroll || 0; }, 0);
+}
+
+function showWelcome() {
+  elWelcome.style.display = 'flex';
+  elViewer.style.display  = 'none';
+  elTbFile.textContent    = '';
+}
+
+function renderMD(raw) {
+  if (!window.marked) return `<pre>${esc(raw)}</pre>`;
+  const r = new marked.Renderer();
+  r.link = (href, title, text) => `<a href="${esc(href||'')}" class="sv-ext">${text}</a>`;
+  r.code = (code, lang) => {
+    let hi = esc(code);
+    if (lang && window.hljs && hljs.getLanguage(lang)) { try { hi = hljs.highlight(code,{language:lang}).value; } catch {} }
+    else if (window.hljs) { try { hi = hljs.highlightAuto(code).value; } catch {} }
+    return `<pre><code class="hljs">${hi}</code></pre>`;
+  };
+  marked.use({renderer:r, gfm:true, breaks:false});
+  return marked.parse(raw);
+}
+
+let _jid = 0;
+function renderJSON(raw) {
+  let p; try { p = JSON.parse(raw); } catch(e) { return `<div class="j-error"><div class="j-error-title">JSON parse error</div><div class="j-error-msg">${esc(e.message)}</div><pre class="j-error-raw">${esc(raw.slice(0,2000))}</pre></div>`; }
+  return `<div class="doc-json">${jVal(p)}</div>`;
+}
+function jVal(v) {
+  if (v===null) return `<span class="jnull">null</span>`;
+  if (typeof v==='boolean') return `<span class="jb">${v}</span>`;
+  if (typeof v==='number')  return `<span class="jn">${v}</span>`;
+  if (typeof v==='string')  return `<span class="js">"${esc(v)}"</span>`;
+  if (Array.isArray(v))     return jArr(v);
+  return jObj(v);
+}
+function jObj(obj) {
+  const keys = Object.keys(obj);
+  if (!keys.length) return `<span class="jbrace">{}</span>`;
+  const id = `j${++_jid}`, auto = keys.length > 6;
+  const rows = keys.map((k,i) => `<div class="j-row"><span class="jk">"${esc(k)}"</span><span class="jbrace">: </span>${jVal(obj[k])}${i<keys.length-1?'<span class="j-comma">,</span>':''}</div>`).join('');
+  return jNode(id,'{','}',rows,auto,`{${keys.length} key${keys.length===1?'':'s'}}`);
+}
+function jArr(arr) {
+  if (!arr.length) return `<span class="jbrace">[]</span>`;
+  const id = `j${++_jid}`, auto = arr.length > 6;
+  const rows = arr.map((v,i) => `<div class="j-row"><span class="j-idx">${i}</span>${jVal(v)}${i<arr.length-1?'<span class="j-comma">,</span>':''}</div>`).join('');
+  return jNode(id,'[',']',rows,auto,`[${arr.length} item${arr.length===1?'':'s'}]`);
+}
+function jNode(id,o,c,rows,col,prev) {
+  return `<span><button class="j-toggle" data-id="${id}">${col?'+':'−'}</button><span class="jbrace">${o}</span><span class="j-preview" data-p="${id}">${col?prev:''}</span><div class="j-children" data-ch="${id}"${col?' style="display:none"':''}>${rows}</div><span class="jbrace" data-cl="${id}"${col?' style="display:none"':''}>${c}</span><span class="jbrace" data-ci="${id}"${col?'':' style="display:none"'}>${c}</span></span>`;
+}
+function attachJSONToggles() {
+  elDocCnt.addEventListener('click', e => {
+    const btn = e.target.closest('.j-toggle'); if (!btn) return;
+    const id = btn.dataset.id;
+    const ch  = elDocCnt.querySelector(`[data-ch="${id}"]`);
+    const prv = elDocCnt.querySelector(`[data-p="${id}"]`);
+    const cl  = elDocCnt.querySelector(`[data-cl="${id}"]`);
+    const ci  = elDocCnt.querySelector(`[data-ci="${id}"]`);
+    if (!ch) return;
+    const wasCollapsed = ch.style.display === 'none';
+    ch.style.display  = wasCollapsed ? '' : 'none';
+    cl.style.display  = wasCollapsed ? '' : 'none';
+    ci.style.display  = wasCollapsed ? 'none' : '';
+    btn.textContent   = wasCollapsed ? '−' : '+';
+    if (prv) { if (!prv.dataset.op) prv.dataset.op = prv.textContent; prv.textContent = wasCollapsed ? '' : prv.dataset.op; }
+  });
+}
+
+function metaLine(f) {
+  const size = f.size ? fmtB(f.size) : '';
+  const mod  = f.modified ? new Date(f.modified).toLocaleDateString(undefined,{month:'short',day:'numeric',year:'numeric'}) : '';
+  const parts = [size,mod].filter(Boolean).map(s=>`<span>${s}</span>`).join('');
+  return `<div class="doc-meta"><span class="meta-badge ${f.ext}">${f.ext.toUpperCase()}</span>${parts}</div>`;
+}
+
+// Sidebar
+function refreshSidebar() {
+  const q = document.getElementById('sidebar-filter').value.toLowerCase();
+  const entries = [...files.entries()].filter(([fp,f]) => !q || f.name.toLowerCase().includes(q) || fp.toLowerCase().includes(q));
+  elSideEmpty.style.display = files.size === 0 ? '' : 'none';
+  elFileList.innerHTML = '';
+  entries.forEach(([fp,f]) => {
+    const d = document.createElement('div');
+    d.className = 'file-item' + (fp===active?' active':'');
+    d.dataset.path = fp; d.title = fp;
+    d.innerHTML = `<span class="file-dot dot-${f.ext}"></span><span class="file-label">${esc(f.name)}</span>`;
+    d.addEventListener('click', () => loadAndOpen(fp));
+    elFileList.appendChild(d);
+  });
+}
+document.getElementById('sidebar-filter').addEventListener('input', refreshSidebar);
+
+// Sidebar resize
+(function(){
+  const sb = document.getElementById('sidebar'), rh = document.getElementById('resize-handle');
+  let drag=false, sx=0, sw=0;
+  rh.addEventListener('mousedown', e => { drag=true; sx=e.clientX; sw=sb.offsetWidth; document.body.style.cursor='col-resize'; document.body.style.userSelect='none'; });
+  document.addEventListener('mousemove', e => { if (!drag) return; sb.style.width = Math.max(140,Math.min(500,sw+e.clientX-sx))+'px'; });
+  document.addEventListener('mouseup', () => { drag=false; document.body.style.cursor=''; document.body.style.userSelect=''; });
+})();
+
+// Search
+let sMatches=[], sCur=-1;
+function openSearch() { elSearchBar.style.display='flex'; elSearchIn.focus(); elSearchIn.select(); if(elSearchIn.value) runSearch(); }
+function closeSearch() { elSearchBar.style.display='none'; clearHighlights(); sMatches=[]; sCur=-1; elSearchCnt.textContent=''; }
+function runSearch() {
+  clearHighlights(); sMatches=[]; sCur=-1;
+  const q=elSearchIn.value; if(!q||q.length<2){elSearchCnt.textContent='';return;}
+  hlText(elDocCnt,q);
+  sMatches=[...elDocCnt.querySelectorAll('mark.sv-hl')];
+  elSearchCnt.textContent = sMatches.length ? `1 / ${sMatches.length}` : 'No results';
+  if(sMatches.length){sCur=0;actMatch();}
+}
+function actMatch() { sMatches.forEach(m=>m.classList.remove('cur')); const m=sMatches[sCur]; if(!m)return; m.classList.add('cur'); m.scrollIntoView({behavior:'smooth',block:'center'}); elSearchCnt.textContent=`${sCur+1} / ${sMatches.length}`; }
+function nextM() { if(!sMatches.length)return; sCur=(sCur+1)%sMatches.length; actMatch(); }
+function prevM() { if(!sMatches.length)return; sCur=(sCur-1+sMatches.length)%sMatches.length; actMatch(); }
+function hlText(root,q) {
+  const re=new RegExp(q.replace(/[.*+?^${}()|[\]\\]/g,'\\$&'),'gi');
+  const walker=document.createTreeWalker(root,NodeFilter.SHOW_TEXT,{acceptNode:n=>n.parentElement?.closest('pre,code,mark')?NodeFilter.FILTER_REJECT:NodeFilter.FILTER_ACCEPT});
+  const nodes=[]; let n; while((n=walker.nextNode())) if(re.test(n.textContent)) nodes.push(n);
+  nodes.forEach(node=>{
+    const frag=document.createDocumentFragment(); let last=0; re.lastIndex=0; let m;
+    while((m=re.exec(node.textContent))!==null){if(m.index>last)frag.appendChild(document.createTextNode(node.textContent.slice(last,m.index)));const mk=document.createElement('mark');mk.className='sv-hl';mk.textContent=m[0];frag.appendChild(mk);last=re.lastIndex;}
+    if(last<node.textContent.length)frag.appendChild(document.createTextNode(node.textContent.slice(last)));
+    node.parentNode?.replaceChild(frag,node);
+  });
+}
+function clearHighlights() { elDocCnt.querySelectorAll('mark.sv-hl').forEach(m=>{m.parentNode?.replaceChild(document.createTextNode(m.textContent),m);m.parentNode?.normalize();}); }
+
+// Buttons
+document.getElementById('btn-open-file').addEventListener('click', ()=>sv.openFileDialog());
+document.getElementById('btn-open-folder').addEventListener('click', ()=>sv.openFolderDialog());
+document.getElementById('btn-welcome-file').addEventListener('click', ()=>sv.openFileDialog());
+document.getElementById('btn-welcome-folder').addEventListener('click', ()=>sv.openFolderDialog());
+elBtnRaw.addEventListener('click', ()=>{ if(!active)return; const f=files.get(active); f.raw=!f.raw; renderContent(); });
+document.getElementById('btn-search').addEventListener('click', openSearch);
+document.getElementById('search-close').addEventListener('click', closeSearch);
+document.getElementById('search-prev').addEventListener('click', prevM);
+document.getElementById('search-next').addEventListener('click', nextM);
+elSearchIn.addEventListener('input', runSearch);
+elSearchIn.addEventListener('keydown', e=>{ if(e.key==='Enter'){e.shiftKey?prevM():nextM();} if(e.key==='Escape')closeSearch(); });
+
+// Keyboard
+document.addEventListener('keydown', e=>{
+  const ctrl=e.ctrlKey||e.metaKey;
+  if(ctrl&&e.key==='o'&&!e.shiftKey){e.preventDefault();sv.openFileDialog();}
+  if(ctrl&&e.shiftKey&&e.key==='O'){e.preventDefault();sv.openFolderDialog();}
+  if(ctrl&&e.key==='f'){e.preventDefault();openSearch();}
+  if(ctrl&&e.key==='`'){e.preventDefault();elBtnRaw.click();}
+  if(ctrl&&e.key==='w'){e.preventDefault();if(active)closeTab(active);}
+  if(e.key==='Escape'&&elSearchBar.style.display!=='none')closeSearch();
+  if(ctrl&&e.key==='Tab'){e.preventDefault();const tabs=[...elTabBar.querySelectorAll('.tab')];if(tabs.length<2)return;const i=tabs.findIndex(t=>t.dataset.path===active);loadAndOpen(tabs[(i+(e.shiftKey?-1:1)+tabs.length)%tabs.length].dataset.path);}
+});
+
+// Drag drop
+document.addEventListener('dragover', e=>{e.preventDefault();document.body.classList.add('dragging');});
+document.addEventListener('dragleave', e=>{if(!e.relatedTarget)document.body.classList.remove('dragging');});
+document.addEventListener('drop', e=>{
+  e.preventDefault(); document.body.classList.remove('dragging');
+  [...e.dataTransfer.files].filter(f=>/\.(md|markdown|json)$/i.test(f.name)).forEach(f=>{
+    sv.readFile(f.path).then(r=>{ if(r.ok){const ext=f.name.split('.').pop().toLowerCase();addFile({filePath:f.path,name:f.name,ext,content:r.content,size:r.size,modified:r.modified});openTab(f.path);} });
+  });
+});
+
+// About
+async function showAbout() {
+  const ex=document.getElementById('about-modal'); if(ex){ex.remove();return;}
+  let v='0.1.0'; try{v=await sv.getAppVersion();}catch{}
+  const ov=document.createElement('div'); ov.id='about-modal';
+  ov.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,0.6);display:flex;align-items:center;justify-content:center;z-index:1000;';
+  ov.innerHTML=`<div style="background:#1a1a1a;border:1px solid rgba(255,255,255,0.12);border-radius:10px;padding:32px 40px;text-align:center;min-width:280px;" onclick="event.stopPropagation()"><div style="width:48px;height:48px;border-radius:12px;background:rgba(43,174,228,0.12);border:1px solid rgba(43,174,228,0.25);display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:700;color:#2BAEE4;margin:0 auto 14px;">SV</div><h2 style="font-size:18px;margin-bottom:4px;">StructureView</h2><p style="font-size:11px;color:#44445a;margin-bottom:10px;">Version ${v}</p><p style="font-size:13px;color:#888882;margin-bottom:20px;">A clean document-style viewer for Markdown and JSON. · EMD SD70ACe</p><button onclick="document.getElementById('about-modal').remove()" style="background:#242424;border:1px solid rgba(255,255,255,0.12);border-radius:6px;color:#e8e8e2;font-size:13px;padding:7px 22px;cursor:pointer;">Close</button></div>`;
+  ov.addEventListener('click', ()=>ov.remove());
+  document.body.appendChild(ov);
+}
+
+// Utils
+function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+function fmtB(b){if(b<1024)return`${b} B`;if(b<1048576)return`${(b/1024).toFixed(1)} KB`;return`${(b/1048576).toFixed(1)} MB`;}
+</script>
 </body>
 </html>

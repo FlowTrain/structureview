@@ -126,6 +126,20 @@ window.Tabs = (() => {
 
   function renderDocument(filePath) {
     const data    = store.get(filePath);
+
+    // If content hasn't loaded yet, fetch it then re-render
+    if (!data.content) {
+      window.structview.readFile(filePath).then(result => {
+        if (result.ok) {
+          data.content  = result.content;
+          data.size     = result.size;
+          data.modified = result.modified;
+          renderDocument(filePath);
+        }
+      });
+      return;
+    }
+
     const viewer  = document.getElementById('viewer');
     const welcome = document.getElementById('welcome');
     const content = document.getElementById('doc-content');
