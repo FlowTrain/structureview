@@ -17,7 +17,7 @@
     "viewer",
     "electron"
   ],
-  "author": "Your Name",
+  "author": "James Gifford",
   "license": "MIT",
   "devDependencies": {
     "electron": "^41.2.0",
