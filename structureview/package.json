@@ -1,5 +1,5 @@
 {
-  "name": "structview",
+  "name": "structureview",
   "version": "0.1.0",
   "description": "A clean document-style viewer for Markdown and JSON files",
   "main": "src/main/index.js",
@@ -29,8 +29,8 @@
     "marked": "^11.0.0"
   },
   "build": {
-    "appId": "com.structview.app",
-    "productName": "StructView",
+    "appId": "com.structureview.app",
+    "productName": "StructureView",
     "icon": "src/assets/icon",
     "directories": {
       "output": "dist"
