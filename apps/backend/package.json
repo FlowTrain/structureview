@@ -15,10 +15,10 @@
     "quality-gate": "npm run lint && npm run coverage"
   },
   "dependencies": {
-    "fastify": "^4.26.0",
+    "@clerk/backend": "^3.4.7",
+    "fastify": "^5.8.5",
     "mongodb": "^7.2.0",
-    "stripe": "^22.1.1",
-    "@clerk/backend": "^3.4.7"
+    "stripe": "^22.1.1"
   },
   "devDependencies": {
     "eslint": "^8.57.0",
