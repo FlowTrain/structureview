@@ -1,0 +1,32 @@
+module.exports = {
+  testEnvironment: 'node',
+  testMatch: ['**/__tests__/**/*.test.js'],
+  testPathIgnorePatterns: ['/node_modules/', '__tests__/__helpers__/'],
+  collectCoverage: true,
+  collectCoverageFrom: ['src/**/*.js', '!src/renderer/js/vendor/**'],
+  coverageDirectory: 'coverage',
+  coverageThreshold: {
+    'src/lib/**/*.js': { branches: 80, functions: 80, lines: 80, statements: 80 },
+    'src/tokens/**/*.js': { branches: 80, functions: 80, lines: 80, statements: 80 },
+    'src/parsers/**/*.js': { branches: 80, functions: 80, lines: 80, statements: 80 },
+    'src/auth/**/*.js': { branches: 80, functions: 80, lines: 80, statements: 80 },
+    'src/components/**/*.js': { branches: 80, functions: 80, lines: 80, statements: 80 },
+    'src/views/**/*.js': { branches: 80, functions: 80, lines: 80, statements: 80 },
+    'src/main/preload.js': { branches: 80, functions: 80, lines: 80, statements: 80 },
+    'src/main/ipc-auth.js': { branches: 80, functions: 80, lines: 80, statements: 80 },
+    'src/main/setup-auth.js': { branches: 80, functions: 80, lines: 80, statements: 80 },
+    'src/renderer/js/renderer/markdown.js': {
+      branches: 80,
+      functions: 80,
+      lines: 80,
+      statements: 80,
+    },
+    'src/renderer/js/renderer/json.js': {
+      branches: 80,
+      functions: 80,
+      lines: 80,
+      statements: 80,
+    },
+  },
+  clearMocks: true,
+};

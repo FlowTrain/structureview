@@ -7,6 +7,7 @@ A clean, document-style desktop viewer for Markdown (`.md`) and JSON (`.json`) f
 ## Quick Start
 
 ### Prerequisites
+
 - [Node.js](https://nodejs.org/) v18 or later
 - npm (included with Node.js)
 
@@ -26,30 +27,30 @@ That's it. The app opens and you can drag files in or use File → Open.
 
 ## Features (Milestone 1)
 
-| Feature | Details |
-|---|---|
-| Markdown rendering | Full GFM — headings, tables, blockquotes, task lists, fenced code |
-| Syntax highlighting | 190+ languages via highlight.js |
-| JSON tree viewer | Collapsible interactive tree, token-colored, auto-collapses large nodes |
-| Multi-tab | Open multiple files simultaneously, scroll position remembered per tab |
-| File sidebar | Lists open files, filter by name, relative timestamps |
-| Live file watching | Files update automatically when changed on disk |
-| In-doc search | Ctrl+F, prev/next navigation, match count |
-| Raw source toggle | Ctrl+` to flip between rendered and raw view |
-| Drag & drop | Drop .md or .json files directly onto the window |
-| File associations | Double-click .md/.json from OS to open in StructView (after build) |
+| Feature             | Details                                                                 |
+| ------------------- | ----------------------------------------------------------------------- |
+| Markdown rendering  | Full GFM — headings, tables, blockquotes, task lists, fenced code       |
+| Syntax highlighting | 190+ languages via highlight.js                                         |
+| JSON tree viewer    | Collapsible interactive tree, token-colored, auto-collapses large nodes |
+| Multi-tab           | Open multiple files simultaneously, scroll position remembered per tab  |
+| File sidebar        | Lists open files, filter by name, relative timestamps                   |
+| Live file watching  | Files update automatically when changed on disk                         |
+| In-doc search       | Ctrl+F, prev/next navigation, match count                               |
+| Raw source toggle   | Ctrl+` to flip between rendered and raw view                            |
+| Drag & drop         | Drop .md or .json files directly onto the window                        |
+| File associations   | Double-click .md/.json from OS to open in StructView (after build)      |
 
 ### Keyboard Shortcuts
 
-| Shortcut | Action |
-|---|---|
-| `Ctrl+O` | Open file |
-| `Ctrl+Shift+O` | Open folder |
-| `Ctrl+W` | Close active tab |
-| `Ctrl+Tab` | Next tab |
-| `Ctrl+Shift+Tab` | Previous tab |
-| `Ctrl+F` | Search in document |
-| `Ctrl+`` ` | Toggle raw source |
+| Shortcut         | Action             |
+| ---------------- | ------------------ |
+| `Ctrl+O`         | Open file          |
+| `Ctrl+Shift+O`   | Open folder        |
+| `Ctrl+W`         | Close active tab   |
+| `Ctrl+Tab`       | Next tab           |
+| `Ctrl+Shift+Tab` | Previous tab       |
+| `Ctrl+F`         | Search in document |
+| `Ctrl+`` `       | Toggle raw source  |
 
 ---
 
@@ -107,11 +108,13 @@ structview/
 ## Roadmap
 
 ### Milestone 2 — VS Code Extension
+
 - Extract the renderer modules into a VS Code webview panel
 - Shared rendering logic between Electron and VS Code
 - Publish to VS Code Marketplace (and Cursor / Windsurf)
 
 ### Future
+
 - AI summary panel (bring-your-own API key)
 - Export to PDF / HTML
 - Cross-file search

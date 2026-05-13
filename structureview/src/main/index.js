@@ -4,6 +4,15 @@ const { app, BrowserWindow, ipcMain, dialog, shell, Menu } = require('electron')
 const path = require('path');
 const fs = require('fs');
 const chokidar = require('chokidar');
+const { setupDesktopAuth } = require('./setup-auth');
+
+// Optional native module — desktop builds ship with it; CI may not.
+let _keytar = null;
+try {
+  _keytar = require('keytar');
+} catch {
+  _keytar = null;
+}
 
 const isDev = process.argv.includes('--dev');
 
@@ -215,6 +224,16 @@ app.on('open-file', (event, filePath) => {
 
 app.whenReady().then(() => {
   createWindow();
+
+  // Wire auth + billing IPC if env is configured (graceful no-op otherwise).
+  setupDesktopAuth({
+    ipcMain,
+    browserWindowFactory: () => new BrowserWindow({ width: 480, height: 720 }),
+    shell,
+    keytar: _keytar,
+    fetch: globalThis.fetch,
+    env: process.env,
+  });
 
   // Handle file passed via argv on Windows/Linux
   const argFile = process.argv.find(a => /\.(md|json|markdown)$/i.test(a));

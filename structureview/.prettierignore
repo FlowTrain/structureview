@@ -1,0 +1,8 @@
+node_modules
+dist
+coverage
+src/renderer/js/vendor
+*.min.js
+# Legacy — reformatted in Phase 0 Batch 2 (characterisation tests touch all files)
+src/main
+src/renderer

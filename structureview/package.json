@@ -9,7 +9,15 @@
     "build": "electron-builder",
     "build:win": "electron-builder --win",
     "build:linux": "electron-builder --linux",
-    "pack": "electron-builder --dir"
+    "pack": "electron-builder --dir",
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "coverage": "jest --coverage",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "quality-gate": "npm run lint && npm run coverage"
   },
   "keywords": [
     "markdown",
@@ -21,7 +29,10 @@
   "license": "MIT",
   "devDependencies": {
     "electron": "^41.2.0",
-    "electron-builder": "^26.8.1"
+    "electron-builder": "^26.8.1",
+    "eslint": "^8.57.0",
+    "jest": "^29.7.0",
+    "prettier": "^3.2.5"
   },
   "dependencies": {
     "chokidar": "^3.5.3",

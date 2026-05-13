@@ -1,0 +1,32 @@
+# Default: LF line endings, treated as text and auto-detected.
+* text=auto eol=lf
+
+# Binary assets — never touch line endings.
+*.png    binary
+*.jpg    binary
+*.jpeg   binary
+*.gif    binary
+*.ico    binary
+*.icns   binary
+*.zip    binary
+*.gz     binary
+*.tar    binary
+*.tgz    binary
+*.exe    binary
+*.dll    binary
+*.so     binary
+*.dylib  binary
+*.pdf    binary
+
+# Minified vendor JS — keep verbatim, don't apply text normalisation.
+*.min.js -text
+*.min.css -text
+
+# Windows-specific scripts — preserve CRLF.
+*.bat text eol=crlf
+*.cmd text eol=crlf
+*.ps1 text eol=crlf
+
+# Lockfiles — text, LF.
+package-lock.json text eol=lf
+yarn.lock text eol=lf
