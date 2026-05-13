@@ -4,3 +4,15 @@ package-lock.json
 *.log
 .DS_Store
 out/
+
+# === added: never commit these ===
+**/coverage/
+node_modules/
+dist/
+out/
+.env
+.env.*
+!.env.example
+.DS_Store
+.vscode/
+.idea/
