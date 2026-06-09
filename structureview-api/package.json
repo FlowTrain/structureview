@@ -1,0 +1,19 @@
+{
+  "name": "structureview-api",
+  "version": "1.0.0",
+  "description": "StructureView licence and subscription API",
+  "type": "module",
+  "main": "src/server.js",
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "node --watch src/server.js"
+  },
+  "engines": {
+    "node": ">=22"
+  },
+  "dependencies": {
+    "@clerk/backend": "^1.0.0",
+    "express": "^4.21.0",
+    "stripe": "^17.0.0"
+  }
+}
