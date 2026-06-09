@@ -1,0 +1,6 @@
+.vscode/**
+.gitignore
+.eslintrc*
+**/*.map
+node_modules/**
+CHANGELOG.md

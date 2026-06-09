@@ -10,6 +10,7 @@
     "build:win": "electron-builder --win",
     "build:linux": "electron-builder --linux",
     "pack": "electron-builder --dir",
+    "icons": "node scripts/generate-icons.mjs",
     "test": "jest",
     "test:watch": "jest --watch",
     "coverage": "jest --coverage",
@@ -32,6 +33,7 @@
     "electron-builder": "^26.8.1",
     "eslint": "^8.57.0",
     "jest": "^29.7.0",
+    "jimp": "^1.6.1",
     "prettier": "^3.2.5"
   },
   "dependencies": {
@@ -42,7 +44,7 @@
   "build": {
     "appId": "com.structureview.app",
     "productName": "StructureView",
-    "icon": "src/assets/icon",
+    "icon": "build/icon",
     "directories": {
       "output": "dist"
     },
@@ -63,14 +65,19 @@
         "nsis",
         "appx"
       ],
-      "icon": "src/assets/icon.ico"
+      "icon": "build/icon.ico"
+    },
+    "appx": {
+      "assets": "build/appx",
+      "applicationId": "StructureView",
+      "backgroundColor": "#0a0a0f"
     },
     "linux": {
       "target": [
         "AppImage",
         "deb"
       ],
-      "icon": "src/assets/icon.png",
+      "icon": "build/icon.png",
       "category": "Development"
     },
     "nsis": {
