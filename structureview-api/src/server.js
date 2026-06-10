@@ -1,4 +1,5 @@
 import express from 'express';
+import rateLimit from 'express-rate-limit';
 import { verifyToken } from '@clerk/backend';
 import Stripe from 'stripe';
 import { fileURLToPath } from 'url';
@@ -45,6 +46,12 @@ export function createApp({
   // Raw body needed for Stripe webhook signature verification
   app.use('/webhooks/stripe', express.raw({ type: 'application/json' }));
   app.use(express.json());
+  const authenticatedRouteLimiter = rateLimit({
+    windowMs: 60 * 1000,
+    limit: 60,
+    standardHeaders: true,
+    legacyHeaders: false,
+  });
 
 // ─── Health ───────────────────────────────────────────────────────────────────
 
@@ -74,7 +81,7 @@ app.get('/health', (_req, res) => res.json({ ok: true }));
 // Called by the VS Code extension and desktop app on startup.
 // Returns { tier: 'free' | 'pro', valid: boolean }
 
-  app.get('/licence', requireClerkSession, async (req, res) => {
+  app.get('/licence', authenticatedRouteLimiter, requireClerkSession, async (req, res) => {
     try {
       const customers = await stripe.customers.search({
         query: `metadata['clerk_user_id']:'${req.clerkUserId}'`,
@@ -107,7 +114,7 @@ app.get('/health', (_req, res) => res.json({ ok: true }));
 // Creates a Stripe Checkout session for upgrading to Pro.
 // Body: { successUrl, cancelUrl }
 
-  app.post('/checkout', requireClerkSession, async (req, res) => {
+  app.post('/checkout', authenticatedRouteLimiter, requireClerkSession, async (req, res) => {
     const { successUrl, cancelUrl } = req.body ?? {};
     if (!successUrl || !cancelUrl) {
       return res.status(400).json({ error: 'successUrl and cancelUrl are required' });
