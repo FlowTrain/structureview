@@ -6,7 +6,8 @@
   "main": "src/server.js",
   "scripts": {
     "start": "node src/server.js",
-    "dev": "node --watch src/server.js"
+    "dev": "node --watch src/server.js",
+    "test": "node --test"
   },
   "engines": {
     "node": ">=22"
@@ -14,6 +15,7 @@
   "dependencies": {
     "@clerk/backend": "^1.0.0",
     "express": "^4.21.0",
+    "express-rate-limit": "^7.5.0",
     "stripe": "^17.0.0"
   }
 }
