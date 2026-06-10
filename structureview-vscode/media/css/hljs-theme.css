@@ -3,7 +3,7 @@
 .hljs-keyword, .hljs-selector-tag, .hljs-built_in { color: #c084fc; } /* violet */
 .hljs-string, .hljs-attr                           { color: #86efac; } /* green  */
 .hljs-number, .hljs-literal                        { color: #fcd34d; } /* amber  */
-.hljs-comment, .hljs-quote                         { color: #4b5563; font-style: italic; }
+.hljs-comment, .hljs-quote                         { color: #8b9ab3; font-style: italic; } /* slate-blue, readable on dark bg */
 .hljs-variable, .hljs-template-variable            { color: #f9a8d4; } /* pink   */
 .hljs-type, .hljs-class .hljs-title                { color: #7dd3fc; } /* sky    */
 .hljs-function .hljs-title, .hljs-title            { color: #93c5fd; }
