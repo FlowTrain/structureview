@@ -40,7 +40,9 @@ function createWindow() {
     show: false,
   });
 
-  mainWindow.loadFile(path.join(__dirname, '../renderer/index.html'));
+  // Load the built React SPA (new-ui-pages/dist) — the full StructureView UI
+  const uiDist = path.join(__dirname, '../../../../../Quality and Testing/new-ui-pages/dist/index.html');
+  mainWindow.loadFile(uiDist);
 
   mainWindow.once('ready-to-show', () => {
     mainWindow.show();

@@ -9,47 +9,42 @@ window.MDRenderer = (() => {
   function configure() {
     if (!window.marked || !window.hljs) return;
 
-    marked.setOptions({
-      gfm: true,
-      breaks: false,
-      pedantic: false,
-    });
+    // Custom renderer — marked v5+ passes a single token object to each method
+    const renderer = {
+      // Open external links in the OS browser
+      link({ href, title, text }) {
+        const safe = escapeAttr(href || '');
+        const t    = title ? ` title="${escapeAttr(title)}"` : '';
+        return `<a href="${safe}"${t} class="sv-external-link">${text}</a>`;
+      },
 
-    // Custom renderer
-    const renderer = new marked.Renderer();
+      // Syntax-highlighted code blocks
+      code({ text: code, lang }) {
+        let highlighted = code;
+        if (lang && hljs.getLanguage(lang)) {
+          try { highlighted = hljs.highlight(code, { language: lang }).value; }
+          catch {}
+        } else {
+          try { highlighted = hljs.highlightAuto(code).value; }
+          catch {}
+        }
+        const langLabel = lang
+          ? `<span class="code-lang-label">${escapeHtml(lang)}</span>`
+          : '';
+        return `<pre>${langLabel}<code class="hljs language-${escapeAttr(lang || '')}">${highlighted}</code></pre>`;
+      },
 
-    // Open external links in the OS browser
-    renderer.link = (href, title, text) => {
-      const safe = escapeAttr(href || '');
-      const t    = title ? ` title="${escapeAttr(title)}"` : '';
-      return `<a href="${safe}"${t} class="sv-external-link">${text}</a>`;
+      // Task list items
+      listitem({ text, task, checked }) {
+        if (task) {
+          return `<li><input type="checkbox" ${checked ? 'checked' : ''} disabled> ${text}</li>\n`;
+        }
+        return `<li>${text}</li>\n`;
+      },
     };
 
-    // Syntax-highlighted code blocks
-    renderer.code = (code, lang) => {
-      let highlighted = code;
-      if (lang && hljs.getLanguage(lang)) {
-        try { highlighted = hljs.highlight(code, { language: lang }).value; }
-        catch {}
-      } else {
-        try { highlighted = hljs.highlightAuto(code).value; }
-        catch {}
-      }
-      const langLabel = lang
-        ? `<span class="code-lang-label">${escapeHtml(lang)}</span>`
-        : '';
-      return `<pre>${langLabel}<code class="hljs language-${escapeAttr(lang || '')}">${highlighted}</code></pre>`;
-    };
-
-    // Task list items
-    renderer.listitem = (text, task, checked) => {
-      if (task) {
-        return `<li><input type="checkbox" ${checked ? 'checked' : ''} disabled> ${text}</li>\n`;
-      }
-      return `<li>${text}</li>\n`;
-    };
-
-    marked.use({ renderer });
+    // marked.setOptions() was removed in v9; use marked.use() for all config
+    marked.use({ gfm: true, breaks: false, renderer });
   }
 
   function render(raw, meta) {
