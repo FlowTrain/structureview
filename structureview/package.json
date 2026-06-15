@@ -18,7 +18,11 @@
     "lint:fix": "eslint . --fix",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "quality-gate": "npm run lint && npm run coverage"
+    "quality-gate": "npm run lint && npm run coverage",
+    "ui:install": "npm --prefix ui install",
+    "ui:dev": "npm --prefix ui run dev",
+    "ui:build": "npm --prefix ui run build",
+    "timc:test": "node src/timc-light/engine.selftest.mjs"
   },
   "keywords": [
     "markdown",
@@ -53,6 +57,14 @@
     "directories": {
       "output": "dist"
     },
+    "files": [
+      "src/**/*",
+      "build/**/*",
+      "package.json",
+      "!**/__tests__/**",
+      "!**/*.test.js",
+      "!ui/**"
+    ],
     "fileAssociations": [
       {
         "ext": "md",
