@@ -1,0 +1,24 @@
+{
+  "name": "structureview-ui",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "description": "React renderer (Vite) for the StructureView Electron app — bundled from the roundhousehq-ui-experiment prototype.",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "lucide-react": "^0.564.0",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "react-router-dom": "^7.14.1",
+    "clsx": "^2.1.1",
+    "tailwind-merge": "^3.3.1"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-react": "^4.3.4",
+    "vite": "^5.4.10"
+  }
+}

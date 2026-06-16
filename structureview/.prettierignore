@@ -6,3 +6,8 @@ src/renderer/js/vendor
 # Legacy — reformatted in Phase 0 Batch 2 (characterisation tests touch all files)
 src/main
 src/renderer
+# Self-contained Vite/TS project + its build output (own toolchain)
+ui
+src/renderer-dist
+# ESM engine — linted (module override) but not prettier-managed by the CJS app config yet
+src/timc-light

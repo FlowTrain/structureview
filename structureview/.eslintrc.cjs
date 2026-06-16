@@ -24,5 +24,21 @@ module.exports = {
     'max-lines-per-function': ['warn', { max: 40, skipBlankLines: true, skipComments: true }],
     'max-params': ['warn', 5],
   },
-  ignorePatterns: ['node_modules/', 'dist/', 'coverage/', 'src/renderer/js/vendor/'],
+  overrides: [
+    {
+      // The TIMC Light engine is framework-free ESM (consumed by the React bundle).
+      files: ['src/timc-light/**/*.js', '**/*.mjs'],
+      parserOptions: { sourceType: 'module' },
+    },
+  ],
+  // ui/ is a self-contained Vite + TypeScript project with its own toolchain;
+  // src/renderer-dist/ is its build output. Neither is linted by the Electron app config.
+  ignorePatterns: [
+    'node_modules/',
+    'dist/',
+    'coverage/',
+    'src/renderer/js/vendor/',
+    'ui/',
+    'src/renderer-dist/',
+  ],
 };

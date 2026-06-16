@@ -40,9 +40,12 @@ function createWindow() {
     show: false,
   });
 
-  // Load the built React SPA (new-ui-pages/dist) — the full StructureView UI
-  const uiDist = path.join(__dirname, '../../../../../Quality and Testing/new-ui-pages/dist/index.html');
-  mainWindow.loadFile(uiDist);
+  // Prefer the bundled React UI (built from ./ui into src/renderer-dist) when present;
+  // otherwise fall back to the self-contained vanilla renderer so the window is never
+  // blank. Both ship inside the app package — no external dev-machine paths.
+  const reactDist = path.join(__dirname, '../renderer-dist/index.html');
+  const vanilla = path.join(__dirname, '../renderer/index.html');
+  mainWindow.loadFile(fs.existsSync(reactDist) ? reactDist : vanilla);
 
   mainWindow.once('ready-to-show', () => {
     mainWindow.show();
