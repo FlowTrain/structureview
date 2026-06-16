@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react'
 import { Link } from 'react-router-dom'
 
 interface Breadcrumb {
@@ -8,7 +9,7 @@ interface Breadcrumb {
 
 interface TopbarProps {
   breadcrumbs: Breadcrumb[]
-  rightContent?: React.ReactNode
+  rightContent?: ReactNode
 }
 
 export function Topbar({ breadcrumbs = [], rightContent }: TopbarProps) {

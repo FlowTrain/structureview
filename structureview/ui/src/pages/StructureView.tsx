@@ -16,14 +16,15 @@ function formatSize(bytes: number): string {
 }
 
 // Build a document record from raw content, analysed live by the engine.
-function makeDoc(opts: { id: string; name: string; icon: string; content: string; hint: string; reqs?: number; size?: string }) {
+function makeDoc(opts: { id: string; name: string; icon: string; content: string; hint: string; size?: string }) {
   const result = analyse(opts.content, opts.hint)
   const score = Math.round(result.aggregateScore)
   return {
     id: opts.id,
     name: opts.name,
     icon: opts.icon,
-    reqs: opts.reqs ?? (result.signals[0]?.findings.length ?? 0),
+    // Number of quality findings (uncovered requirements / structural issues) the engine raised.
+    issues: result.signals[0]?.findings.length ?? 0,
     size: opts.size ?? '—',
     content: opts.content,
     hint: opts.hint,
@@ -75,6 +76,10 @@ const SAMPLE_DOCS = [
   const sample = SAMPLES[d.id as keyof typeof SAMPLES]
   return makeDoc({ id: d.id, name: d.name, icon: d.icon, content: sample.content, hint: sample.hint, size: d.size })
 })
+
+// EARS keywords highlighted in the signal text (matched by content, since the segment
+// arrays don't place keywords at a consistent index).
+const EARS_KEYWORDS = new Set(['WHEN', 'WHILE', 'IF', 'WHERE', 'THEN', 'SHALL', 'THE'])
 
 const signals = [
   { id: 1, pattern: 'WHEN-THEN', reqId: 'REQ-001', text: ['WHEN', ' user submits authentication form ', 'THEN', ' system ', 'SHALL', ' generate immutable audit log entry'], meta: 'Pattern matched · Verb: SHALL · Quantified', score: 96, status: 'pass' },
@@ -215,7 +220,20 @@ export function StructureView() {
             <div className="sv-panel">
               <div className="sv-panel-hd">
                 <span className="sv-panel-title">Documents</span>
-                <span className="badge b-blue">{docs.length} files</span>
+                <div className="flex gap-2 items-center">
+                  <button
+                    type="button"
+                    className="btn btn-secondary btn-sm"
+                    onClick={() => (window as any).structview?.openFileDialog?.()}
+                    title="Open a Markdown or JSON file (Ctrl+O)"
+                  >
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" aria-hidden="true">
+                      <line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" />
+                    </svg>
+                    Open file
+                  </button>
+                  <span className="badge b-blue">{docs.length} files</span>
+                </div>
               </div>
               <div className="sv-panel-body">
                 <div className="active-doc-banner">
@@ -235,7 +253,7 @@ export function StructureView() {
                     <span className="doc-icon">{doc.icon}</span>
                     <div style={{flex:1,minWidth:0}}>
                       <div className="doc-name">{doc.name}</div>
-                      <div className="doc-meta">{doc.reqs} reqs · {doc.size}</div>
+                      <div className="doc-meta">{doc.issues} issues · {doc.size}</div>
                     </div>
                     <span className={`score-pill sp-${doc.status === 'pass' ? 'ok' : doc.status === 'warn' ? 'warn' : 'err'}`}>
                       {doc.score}
@@ -305,7 +323,11 @@ export function StructureView() {
                       </div>
                       <div className="sig-text">
                         {sig.text.map((part, idx) => 
-                          idx % 2 === 0 ? part : <span key={idx} className="sig-kw">{part}</span>
+                          EARS_KEYWORDS.has(part.trim().toUpperCase()) ? (
+                            <span key={idx} className="sig-kw">{part}</span>
+                          ) : (
+                            <span key={idx}>{part}</span>
+                          )
                         )}
                       </div>
                       <div className="sig-meta">
@@ -355,7 +377,7 @@ export function StructureView() {
                   <div style={{fontSize:'var(--xs)',color:'var(--txf)',textTransform:'uppercase',letterSpacing:'.06em',marginBottom:'var(--s2)'}}>
                     Composite Score
                   </div>
-                  <div style={{fontFamily:'var(--ff-display)',fontSize:'var(--h1)',fontWeight:800,color:'var(--ft-gold)'}}>
+                  <div style={{fontFamily:'var(--ff-display)',fontSize:'var(--2xl)',fontWeight:800,color:'var(--ft-gold)'}}>
                     {composite.toFixed(1)}
                   </div>
                   <div className="t-xs text-muted mt-2">

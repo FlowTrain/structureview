@@ -3,7 +3,14 @@ module.exports = {
   testMatch: ['**/__tests__/**/*.test.js'],
   testPathIgnorePatterns: ['/node_modules/', '__tests__/__helpers__/'],
   collectCoverage: true,
-  collectCoverageFrom: ['src/**/*.js', '!src/renderer/js/vendor/**'],
+  collectCoverageFrom: [
+    'src/**/*.js',
+    '!src/renderer/js/vendor/**',
+    // ESM engine (verified via `npm run timc:test`) and built UI output are not
+    // instrumented by the CommonJS jest setup.
+    '!src/timc-light/**',
+    '!src/renderer-dist/**',
+  ],
   coverageDirectory: 'coverage',
   coverageThreshold: {
     'src/lib/**/*.js': { branches: 80, functions: 80, lines: 80, statements: 80 },

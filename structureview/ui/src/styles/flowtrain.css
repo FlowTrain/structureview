@@ -1211,13 +1211,6 @@ a, button, [role='button'], input, select {
 }
 .q2-panel-body { padding: var(--s4) var(--s5); }
 
-/* Muted/desaturated treatment for in-dev content */
-.indev-content {
-  filter: saturate(0.55) opacity(0.75);
-  pointer-events: none;
-  user-select: none;
-}
-
 /* Coming soon overlay */
 .coming-soon-badge {
   position: absolute;

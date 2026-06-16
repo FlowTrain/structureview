@@ -1,6 +1,11 @@
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
-import { resolve } from 'path';
+import { resolve, dirname } from 'path';
+import { fileURLToPath } from 'url';
+
+// This config is ESM (ui/package.json has "type": "module"), so __dirname is not defined —
+// derive it from import.meta.url.
+const __dirname = dirname(fileURLToPath(import.meta.url));
 
 // Built output is written into the Electron app package (src/renderer-dist) and loaded
 // via file:// — so assets must use relative paths (base: './').

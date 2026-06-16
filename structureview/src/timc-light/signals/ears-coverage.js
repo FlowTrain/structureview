@@ -26,7 +26,7 @@ function stripListMarker(line) {
 // Strip a leading requirement label like "**AC1** —", "REQ-001:", "NFR-03.", "FR1 -".
 function stripReqLabel(s) {
   return s
-    .replace(/^\*{0,2}(?:REQ|AC|NFR|FR|US)[-\s.]?\d+[\w.\-]*\*{0,2}\s*[—:.)\-]*\s*/i, '')
+    .replace(/^\*{0,2}(?:REQ|AC|NFR|FR|US)[-\s.]?\d+[\w.-]*\*{0,2}\s*[—:.)-]*\s*/i, '')
     .replace(/^\*{0,2}\s*/, '');
 }
 

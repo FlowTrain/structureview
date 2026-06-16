@@ -1,11 +1,16 @@
+import type { FormEvent } from 'react'
+import { useNavigate } from 'react-router-dom'
+
 export function Login() {
-  const handleLogin = (e: React.FormEvent) => {
+  const navigate = useNavigate()
+  const handleLogin = (e: FormEvent) => {
     e.preventDefault()
     const btn = document.getElementById('board-btn') as HTMLButtonElement
     btn.innerHTML = '<span class="spinner"></span> Coupling to fleet...'
     btn.disabled = true
+    // HashRouter navigation (a hard window.location change would bypass the router under file://)
     setTimeout(() => {
-      window.location.href = '/roundhouse'
+      navigate('/structureview')
     }, 900)
   }
 
