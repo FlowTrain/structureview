@@ -93,46 +93,111 @@ const signals = [
 export function StructureView() {
   const [docs, setDocs] = useState(SAMPLE_DOCS)
   const [activeId, setActiveId] = useState(SAMPLE_DOCS[0].id)
+  const [query, setQuery] = useState('')
+  const [mode, setMode] = useState<'ears' | 'sections' | 'bdd'>('ears')
   const activeDoc = docs.find((d) => d.id === activeId) ?? docs[0]
 
-  // Phase 3: when the user opens a file (menu File ▸ Open, Ctrl+O, or drag-drop), the
-  // Electron main process emits 'file-loaded' over the preload bridge. Analyse it live
-  // and make it the active document so the TIMC Light panel reflects the real file.
+  function removeDoc(id: string) {
+    setDocs((prev) => prev.filter((d) => d.id !== id))
+    if (id === activeId) {
+      const remaining = docs.filter((d) => d.id !== id)
+      if (remaining.length) setActiveId(remaining[0].id)
+    }
+  }
+
+  // Open a single file (File ▸ Open / Ctrl+O / drag-drop) or a whole folder (File ▸ Open
+  // Folder) via the preload bridge, analyse each live, and add it to the document list.
   useEffect(() => {
     const sv = (window as any).structview
-    if (!sv || typeof sv.onFileLoaded !== 'function') return
-    sv.onFileLoaded((data: { filePath: string; name: string; ext: string; content: string; size: number }) => {
-      const hint = /^json$/i.test(data.ext) ? 'json' : 'markdown'
-      const doc = makeDoc({
-        id: data.filePath,
-        name: data.name,
+    if (!sv) return
+    const toDoc = (filePath: string, ext: string, content: string, size: number) => {
+      const hint = /^json$/i.test(ext) ? 'json' : 'markdown'
+      return makeDoc({
+        id: filePath,
+        name: filePath.split(/[/\\]/).pop() || filePath,
         icon: hint === 'json' ? '⚡' : '📄',
-        content: data.content,
+        content,
         hint,
-        size: formatSize(data.size),
+        size: formatSize(size),
       })
-      setDocs((prev) => [doc, ...prev.filter((d) => d.id !== doc.id)])
+    }
+    sv.onFileLoaded?.((d: { filePath: string; ext: string; content: string; size: number }) => {
+      const doc = toDoc(d.filePath, d.ext, d.content, d.size)
+      setDocs((prev) => [doc, ...prev.filter((x) => x.id !== doc.id)])
       setActiveId(doc.id)
     })
-    return () => sv.removeAllListeners && sv.removeAllListeners('file-loaded')
+    sv.onFolderScanned?.(async ({ files }: { files: string[] }) => {
+      const loaded = await Promise.all(
+        files.slice(0, 300).map(async (fp) => {
+          const ext = (fp.split('.').pop() || '').toLowerCase()
+          const res = await sv.readFile(fp)
+          return res?.ok ? toDoc(fp, ext, res.content, res.size) : null
+        })
+      )
+      const valid = loaded.filter(Boolean) as ReturnType<typeof makeDoc>[]
+      if (!valid.length) return
+      setDocs((prev) => {
+        const ids = new Set(prev.map((d) => d.id))
+        return [...prev, ...valid.filter((d) => !ids.has(d.id))]
+      })
+      setActiveId(valid[0].id)
+    })
+    return () => {
+      sv.removeAllListeners?.('file-loaded')
+      sv.removeAllListeners?.('folder-scanned')
+    }
   }, [])
 
-  // Live TIMC Light result for the active document.
+  // Live TIMC Light result for the active document. For markdown the engine returns both
+  // an EARS-coverage and a section-completeness signal; the panel toggles between them.
   const timc = activeDoc.result
-  const composite = timc.aggregateScore
+  const earsSig = timc.signals.find((s: any) => s.type === 'ears-coverage')
+  const sectionSig = timc.signals.find((s: any) => s.type === 'section-completeness')
+  const bddSig = timc.signals.find((s: any) => s.type === 'bdd-coverage')
+  const jsonSig = timc.signals.find((s: any) => s.type === 'json-quality')
+  const hasModes = !!(earsSig && sectionSig && bddSig)
+  const byMode: Record<string, any> = { ears: earsSig, sections: sectionSig, bdd: bddSig }
+  const signal = jsonSig ?? byMode[mode] ?? earsSig ?? timc.signals[0]
+  const composite = signal ? signal.score : timc.aggregateScore
   const compositeStatus = statusFor(composite)
-  const signal = timc.signals[0]
-  // Build the panel breakdown from whatever the engine actually produced:
-  // JSON → the 5 quality dimensions; Markdown → EARS coverage.
-  const metrics: { label: string; value: number }[] = signal?.breakdown
-    ? [
-        { label: 'Parseability', value: Math.round(signal.breakdown.parseability) },
-        { label: 'Null density', value: Math.round(signal.breakdown.nullDensity) },
-        { label: 'Key consistency', value: Math.round(signal.breakdown.keyConsistency) },
-        { label: 'Nesting depth', value: Math.round(signal.breakdown.nestingDepth) },
-        { label: 'Envelope shape', value: Math.round(signal.breakdown.envelopeShape) },
-      ]
-    : [{ label: 'EARS coverage', value: Math.round(composite) }]
+
+  // The breakdown shown depends on which signal is in view.
+  const metrics: { label: string; value: number }[] =
+    signal?.type === 'json-quality'
+      ? [
+          { label: 'Parseability', value: Math.round(signal.breakdown.parseability) },
+          { label: 'Null density', value: Math.round(signal.breakdown.nullDensity) },
+          { label: 'Key consistency', value: Math.round(signal.breakdown.keyConsistency) },
+          { label: 'Nesting depth', value: Math.round(signal.breakdown.nestingDepth) },
+          { label: 'Envelope shape', value: Math.round(signal.breakdown.envelopeShape) },
+        ]
+      : signal?.type === 'section-completeness'
+        ? [{ label: `Sections present (${signal.breakdown.present}/${signal.breakdown.total})`, value: Math.round(signal.score) }]
+        : signal?.type === 'bdd-coverage'
+          ? [{ label: `Scenarios well-formed (${signal.breakdown.wellFormed}/${signal.breakdown.scenarios})`, value: Math.round(signal.score) }]
+          : [{ label: 'EARS coverage', value: Math.round(signal ? signal.score : composite) }]
+
+  // The upgrade CTA is driven by the resolvable signal (EARS/JSON), independent of view mode.
+  const ctaSignal = jsonSig ?? earsSig
+
+  // Cross-file search: filter the document list by name or content, and count how many
+  // matches are in the active doc and how many other loaded specs reference the term.
+  const q = query.trim().toLowerCase()
+  const countMatches = (content: string, term: string) => {
+    if (!term) return 0
+    const lc = content.toLowerCase()
+    let n = 0
+    let i = 0
+    while ((i = lc.indexOf(term, i)) !== -1) {
+      n++
+      i += term.length
+    }
+    return n
+  }
+  const ranked = docs.map((d) => ({ doc: d, matches: q ? countMatches(d.content, q) : 0 }))
+  const visible = q ? ranked.filter((r) => r.matches > 0 || r.doc.name.toLowerCase().includes(q)) : ranked
+  const activeMatches = q ? countMatches(activeDoc.content, q) : 0
+  const referencingCount = q ? ranked.filter((r) => r.doc.id !== activeId && r.matches > 0).length : 0
 
   return (
     <div className="app-shell">
@@ -232,6 +297,17 @@ export function StructureView() {
                     </svg>
                     Open file
                   </button>
+                  <button
+                    type="button"
+                    className="btn btn-secondary btn-sm"
+                    onClick={() => (window as any).structview?.openFolderDialog?.()}
+                    title="Open a folder of Markdown/JSON files (Ctrl+Shift+O)"
+                  >
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" aria-hidden="true">
+                      <path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+                    </svg>
+                    Open folder
+                  </button>
                   <span className="badge b-blue">{docs.length} files</span>
                 </div>
               </div>
@@ -243,7 +319,25 @@ export function StructureView() {
                   Active: <strong>{activeDoc.name}</strong>
                 </div>
 
-                {docs.map((doc) => (
+                {/* Filter files + cross-file content/reference search */}
+                <input
+                  type="text"
+                  value={query}
+                  onChange={(e) => setQuery(e.target.value)}
+                  placeholder="Filter files or search content…"
+                  spellCheck={false}
+                  style={{width:'100%',padding:'var(--s2) var(--s3)',marginBottom:'var(--s2)',background:'var(--sf2)',border:'1px solid var(--bd)',borderRadius:'var(--r-md)',color:'var(--tx)',fontSize:'var(--sm)',outline:'none'}}
+                />
+                {q && (
+                  <div className="t-xs text-muted" style={{marginBottom:'var(--s3)'}}>
+                    {activeMatches} match{activeMatches === 1 ? '' : 'es'} in {activeDoc.name} · referenced in {referencingCount} other spec{referencingCount === 1 ? '' : 's'}
+                  </div>
+                )}
+                {visible.length === 0 && (
+                  <div className="t-xs text-faint" style={{padding:'var(--s3) 0'}}>No files match “{query}”</div>
+                )}
+
+                {visible.map(({ doc, matches }) => (
                   <div
                     key={doc.id}
                     className={`doc-item ${activeDoc.id === doc.id ? 'active' : ''}`}
@@ -255,9 +349,23 @@ export function StructureView() {
                       <div className="doc-name">{doc.name}</div>
                       <div className="doc-meta">{doc.issues} issues · {doc.size}</div>
                     </div>
+                    {q && matches > 0 && (
+                      <span className="badge b-blue" style={{fontSize:10}} title={`${matches} content match${matches === 1 ? '' : 'es'}`}>
+                        {matches}
+                      </span>
+                    )}
                     <span className={`score-pill sp-${doc.status === 'pass' ? 'ok' : doc.status === 'warn' ? 'warn' : 'err'}`}>
                       {doc.score}
                     </span>
+                    <button
+                      type="button"
+                      title="Remove from list"
+                      aria-label={`Remove ${doc.name}`}
+                      onClick={(e) => { e.stopPropagation(); removeDoc(doc.id) }}
+                      style={{background:'none',border:'none',color:'var(--txf)',cursor:'pointer',padding:'0 4px',fontSize:14,lineHeight:1}}
+                    >
+                      ×
+                    </button>
                   </div>
                 ))}
 
@@ -372,6 +480,23 @@ export function StructureView() {
                 </span>
               </div>
               <div className="sv-panel-body">
+                {/* Analysis mode toggle — markdown specs carry both EARS and Section signals */}
+                {hasModes && (
+                  <div className="flex gap-2" style={{marginBottom:'var(--s4)'}}>
+                    {(['ears', 'sections', 'bdd'] as const).map((m) => (
+                      <button
+                        key={m}
+                        type="button"
+                        onClick={() => setMode(m)}
+                        className={`btn btn-sm ${mode === m ? 'btn-primary' : 'btn-secondary'}`}
+                        style={{flex:1,justifyContent:'center'}}
+                      >
+                        {m === 'ears' ? 'EARS' : m === 'sections' ? 'Sections' : 'BDD'}
+                      </button>
+                    ))}
+                  </div>
+                )}
+
                 {/* Composite score */}
                 <div className="timc-composite">
                   <div style={{fontSize:'var(--xs)',color:'var(--txf)',textTransform:'uppercase',letterSpacing:'.06em',marginBottom:'var(--s2)'}}>
@@ -404,16 +529,16 @@ export function StructureView() {
                   </div>
                 )}
 
-                {/* Upgrade CTA — only when the engine says a signal cannot be resolved */}
-                {timc.shouldShowCTA && (
+                {/* Upgrade CTA — driven by the resolvable signal, independent of view mode */}
+                {timc.shouldShowCTA && ctaSignal && (
                   <div className="upgrade-cta">
                     <div style={{fontWeight:600,fontSize:'var(--sm)',color:'var(--tx)',marginBottom:'var(--s2)'}}>
                       Upgrade to Quality Guardian
                     </div>
                     <div className="t-xs text-muted mb-3">
-                      {signal?.type === 'ears-coverage'
-                        ? `Quality Guardian found ${signal.findings.length} requirement${signal.findings.length === 1 ? '' : 's'} not in EARS format in this document. It can rewrite them and track coverage across your entire project.`
-                        : `This response has a structural quality score of ${Math.round(composite)}/100. Quality Guardian audits response schemas against your OpenAPI spec.`}
+                      {ctaSignal.type === 'ears-coverage'
+                        ? `Quality Guardian found ${ctaSignal.findings.length} requirement${ctaSignal.findings.length === 1 ? '' : 's'} not in EARS format in this document. It can rewrite them and track coverage across your entire project.`
+                        : `This response has a structural quality score of ${Math.round(ctaSignal.score)}/100. Quality Guardian audits response schemas against your OpenAPI spec.`}
                     </div>
                     <Link to="/quality-guardian" className="btn btn-secondary btn-sm w-full" style={{justifyContent:'center'}}>
                       Preview Quality Guardian

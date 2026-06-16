@@ -3,6 +3,8 @@
 import { analyse, detectDocumentType } from './engine.js';
 import { classifyRequirement, scoreEarsCoverage, isRequirement } from './signals/ears-coverage.js';
 import { scoreJsonQuality } from './signals/json-quality.js';
+import { scoreSectionCompleteness } from './signals/section-completeness.js';
+import { scoreBddCoverage } from './signals/bdd-coverage.js';
 
 let pass = 0, fail = 0;
 const approx = (a, b) => Math.abs(a - b) < 1e-9;
@@ -63,6 +65,26 @@ ok('BDD score exactly 70', approx(sj70.score, 70) && sj70.canResolve === true);
 ok('BDD score 70 no CTA', analyse('{"a":null,"b":null,"c":null,"d":null,"e":1}').shouldShowCTA === false);
 const ou = analyse('plain prose with no structure');
 ok('BDD unknown → 100, no signals, no CTA', ou.documentType === 'unknown' && ou.aggregateScore === 100 && ou.signals.length === 0 && ou.shouldShowCTA === false);
+
+// Section completeness
+const allSections = '# S99\n## 1. Objective\n## 2. Scope\n## 3. Technical Design\n## 4. BDD Scenarios\n## 5. Test Strategy\n## 6. PR Breakdown\n## 7. Dependencies\n## 8. Acceptance Criteria\n## 9. Decision Log\n## 10. Delivery Surface & Integration';
+ok('all sections = 100', scoreSectionCompleteness(allSections).score === 100);
+ok('all sections no findings', scoreSectionCompleteness(allSections).findings.length === 0);
+const someSections = scoreSectionCompleteness('# S99\n## Objective\n## Scope\n## Acceptance Criteria');
+ok('partial sections between 0 and 100', someSections.score > 0 && someSections.score < 100);
+ok('partial sections → 7 findings', someSections.findings.length === 7 && someSections.findings.every((f) => f.severity === 'warning'));
+ok('section canResolve true (no CTA)', someSections.canResolve === true);
+ok('section breakdown present/total', someSections.breakdown.present === 3 && someSections.breakdown.total === 10);
+const mdoc = analyse(allSections + '\n- The system shall log\n\nScenario: happy\n  Given x\n  When y\n  Then z');
+ok('markdown returns ears+sections+bdd', mdoc.signals.length === 3 && ['ears-coverage', 'section-completeness', 'bdd-coverage'].every((t) => mdoc.signals.some((s) => s.type === t)));
+ok('markdown aggregate blends to 100', Math.round(mdoc.aggregateScore) === 100);
+
+// BDD coverage
+ok('bdd well-formed = 100', scoreBddCoverage('Scenario: a\n  Given x\n  When y\n  Then z').score === 100);
+const bmiss = scoreBddCoverage('Scenario: a\n  Given x\n  When y');
+ok('bdd missing Then → 0 with finding', bmiss.score === 0 && bmiss.findings[0].message.includes('Then'));
+ok('bdd none → 0 with finding', scoreBddCoverage('# prose').score === 0 && scoreBddCoverage('# x').findings.length === 1);
+ok('bdd breakdown counts scenarios', scoreBddCoverage('Scenario: a\n Given x\n When y\n Then z\nScenario: b\n When q\n Then r').breakdown.scenarios === 2);
 
 console.log(`\n${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);

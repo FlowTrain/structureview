@@ -10,6 +10,8 @@
 
 import { scoreEarsCoverage } from './signals/ears-coverage.js';
 import { scoreJsonQuality } from './signals/json-quality.js';
+import { scoreSectionCompleteness } from './signals/section-completeness.js';
+import { scoreBddCoverage } from './signals/bdd-coverage.js';
 
 /** @returns {'markdown-spec'|'json-response'|'unknown'} */
 export function detectDocumentType(content, mimeHint) {
@@ -39,7 +41,9 @@ export function analyse(content, mimeHint) {
     const r = scoreJsonQuality(content);
     signals = [{ signalId: r.signalId, type: r.type, score: r.score, findings: r.findings, canResolve: r.canResolve, breakdown: r.breakdown }];
   } else if (documentType === 'markdown-spec') {
-    signals = [scoreEarsCoverage(content)];
+    // EARS coverage (primary) + section completeness + BDD coverage — the UI toggles
+    // between them; the aggregate score blends all three for the document-list pill.
+    signals = [scoreEarsCoverage(content), scoreSectionCompleteness(content), scoreBddCoverage(content)];
   }
 
   const aggregateScore = signals.length === 0
