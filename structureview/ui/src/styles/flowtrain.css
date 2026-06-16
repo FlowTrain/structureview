@@ -1998,3 +1998,56 @@ a, button, [role='button'], input, select {
   .lemon-cta-card { flex-direction: column; }
   .lemon-table-wrap { overflow-x: auto; }
 }
+
+/* ─── Document reader (rendered markdown / JSON) ──────────────── */
+.doc-reader {
+  overflow-y: auto;
+  line-height: 1.65;
+  color: var(--tx);
+  font-size: var(--sm);
+}
+.doc-reader h1,
+.doc-reader h2,
+.doc-reader h3,
+.doc-reader h4 {
+  font-family: var(--ff-display);
+  color: var(--ft-blue);
+  margin: var(--s4) 0 var(--s2);
+  line-height: 1.25;
+}
+.doc-reader h1 { font-size: var(--lg); }
+.doc-reader h2 { font-size: var(--base); border-bottom: 1px solid var(--bd); padding-bottom: var(--s1); }
+.doc-reader h3 { font-size: var(--sm); }
+.doc-reader p,
+.doc-reader li { margin: var(--s2) 0; }
+.doc-reader ul,
+.doc-reader ol { padding-left: var(--s5); }
+.doc-reader a { color: var(--ft-blue); text-decoration: underline; cursor: pointer; }
+.doc-reader code {
+  font-family: var(--ff-mono, monospace);
+  font-size: 0.9em;
+  background: var(--sf2);
+  padding: 1px 5px;
+  border-radius: var(--r-sm);
+}
+.doc-reader pre {
+  background: var(--sf2);
+  border: 1px solid var(--bd);
+  border-radius: var(--r-md);
+  padding: var(--s3);
+  overflow-x: auto;
+  font-family: var(--ff-mono, monospace);
+  font-size: var(--xs);
+  line-height: 1.5;
+}
+.doc-reader pre code { background: none; padding: 0; }
+.doc-reader blockquote {
+  border-left: 3px solid var(--ft-blue);
+  margin: var(--s3) 0;
+  padding-left: var(--s3);
+  color: var(--txm);
+}
+.doc-reader table { border-collapse: collapse; margin: var(--s3) 0; width: 100%; }
+.doc-reader th,
+.doc-reader td { border: 1px solid var(--bd); padding: var(--s2); text-align: left; font-size: var(--xs); }
+.doc-reader th { background: var(--sf2); }

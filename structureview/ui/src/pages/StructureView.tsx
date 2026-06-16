@@ -1,4 +1,5 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
+import { marked } from 'marked'
 import { Link } from 'react-router-dom'
 import { Sidebar } from '../components/layout/Sidebar'
 import { Topbar } from '../components/layout/Topbar'
@@ -13,6 +14,10 @@ function statusFor(score: number): 'pass' | 'warn' | 'fail' {
 function formatSize(bytes: number): string {
   if (!bytes) return '—'
   return bytes < 1024 ? `${bytes} B` : `${(bytes / 1024).toFixed(1)} KB`
+}
+
+function escapeHtml(s: string): string {
+  return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
 }
 
 // Build a document record from raw content, analysed live by the engine.
@@ -77,24 +82,12 @@ const SAMPLE_DOCS = [
   return makeDoc({ id: d.id, name: d.name, icon: d.icon, content: sample.content, hint: sample.hint, size: d.size })
 })
 
-// EARS keywords highlighted in the signal text (matched by content, since the segment
-// arrays don't place keywords at a consistent index).
-const EARS_KEYWORDS = new Set(['WHEN', 'WHILE', 'IF', 'WHERE', 'THEN', 'SHALL', 'THE'])
-
-const signals = [
-  { id: 1, pattern: 'WHEN-THEN', reqId: 'REQ-001', text: ['WHEN', ' user submits authentication form ', 'THEN', ' system ', 'SHALL', ' generate immutable audit log entry'], meta: 'Pattern matched · Verb: SHALL · Quantified', score: 96, status: 'pass' },
-  { id: 2, pattern: 'UBIQUITOUS', reqId: 'REQ-002', text: ['The system ', 'SHALL', ' maintain 99.9% uptime SLA across all production regions'], meta: 'Pattern matched · Measurable threshold · SLA', score: 89, status: 'pass' },
-  { id: 3, pattern: 'WHERE', reqId: 'REQ-011', text: ['WHERE', ' failure threshold exceeds 5% ', 'THE', ' system ', 'SHALL', ' alert the operations team within 30 seconds'], meta: 'Pattern matched · Threshold: 5% · Timeout: 30s', score: 91, status: 'pass' },
-  { id: 4, pattern: 'WHILE', reqId: 'REQ-015', text: ['WHILE', ' system is in maintenance mode ', 'THE', ' system ', 'SHALL', ' queue all incoming requests'], meta: 'Pattern matched · State-based · Queueing', score: 87, status: 'pass' },
-  { id: 5, pattern: 'IF-THEN', reqId: 'REQ-023', text: ['IF', ' API rate limit exceeded ', 'THEN', ' system ', 'SHALL', ' return 429 status with retry-after header'], meta: 'Pattern matched · HTTP semantics · RFC compliant', score: 94, status: 'pass' },
-  { id: 6, pattern: 'COMPLEX', reqId: 'REQ-041', text: ['System should handle errors gracefully and inform users appropriately'], meta: 'Ambiguous · No pattern match · Missing quantifiers', score: 52, status: 'fail' },
-]
-
 export function StructureView() {
   const [docs, setDocs] = useState(SAMPLE_DOCS)
   const [activeId, setActiveId] = useState(SAMPLE_DOCS[0].id)
   const [query, setQuery] = useState('')
   const [mode, setMode] = useState<'ears' | 'sections' | 'bdd'>('ears')
+  const [collapsed, setCollapsed] = useState(false)
   const activeDoc = docs.find((d) => d.id === activeId) ?? docs[0]
 
   function removeDoc(id: string) {
@@ -122,19 +115,30 @@ export function StructureView() {
       })
     }
     sv.onFileLoaded?.((d: { filePath: string; ext: string; content: string; size: number }) => {
-      const doc = toDoc(d.filePath, d.ext, d.content, d.size)
-      setDocs((prev) => [doc, ...prev.filter((x) => x.id !== doc.id)])
-      setActiveId(doc.id)
+      try {
+        const doc = toDoc(d.filePath, d.ext, d.content, d.size)
+        setDocs((prev) => [doc, ...prev.filter((x) => x.id !== doc.id)])
+        setActiveId(doc.id)
+      } catch (err) {
+        console.error('[onFileLoaded] failed:', err)
+      }
     })
     sv.onFolderScanned?.(async ({ files }: { files: string[] }) => {
+      console.log('[onFolderScanned] scanned files:', files?.length ?? 0)
       const loaded = await Promise.all(
-        files.slice(0, 300).map(async (fp) => {
-          const ext = (fp.split('.').pop() || '').toLowerCase()
-          const res = await sv.readFile(fp)
-          return res?.ok ? toDoc(fp, ext, res.content, res.size) : null
+        (files || []).slice(0, 300).map(async (fp) => {
+          try {
+            const ext = (fp.split('.').pop() || '').toLowerCase()
+            const res = await sv.readFile(fp)
+            return res?.ok ? toDoc(fp, ext, res.content, res.size) : null
+          } catch (err) {
+            console.error('[onFolderScanned] failed for', fp, err)
+            return null
+          }
         })
       )
       const valid = loaded.filter(Boolean) as ReturnType<typeof makeDoc>[]
+      console.log('[onFolderScanned] loaded docs:', valid.length)
       if (!valid.length) return
       setDocs((prev) => {
         const ids = new Set(prev.map((d) => d.id))
@@ -147,6 +151,41 @@ export function StructureView() {
       sv.removeAllListeners?.('folder-scanned')
     }
   }, [])
+
+  // Render the active document for reading: markdown → HTML, JSON → pretty-printed.
+  const renderedDoc = useMemo(() => {
+    if (!activeDoc) return ''
+    const content = activeDoc.content || ''
+    if (activeDoc.hint === 'json') {
+      try {
+        return `<pre class="doc-json">${escapeHtml(JSON.stringify(JSON.parse(content), null, 2))}</pre>`
+      } catch {
+        return `<pre class="doc-json">${escapeHtml(content)}</pre>`
+      }
+    }
+    try {
+      return marked.parse(content) as string
+    } catch {
+      return `<pre>${escapeHtml(content)}</pre>`
+    }
+  }, [activeDoc])
+
+  // Empty state — guard before any activeDoc-dependent computation (e.g. all files removed).
+  if (docs.length === 0) {
+    const sv2 = (window as any).structview
+    return (
+      <div style={{display:'flex',alignItems:'center',justifyContent:'center',height:'100vh',background:'var(--bg)'}}>
+        <div style={{textAlign:'center'}}>
+          <div style={{fontFamily:'var(--ff-display)',fontSize:'var(--xl)',fontWeight:800,color:'var(--ft-blue)'}}>StructureView</div>
+          <div className="t-sm text-muted" style={{margin:'12px 0 16px'}}>No documents open</div>
+          <div className="flex gap-3" style={{justifyContent:'center'}}>
+            <button type="button" className="btn btn-secondary btn-sm" onClick={() => sv2?.openFileDialog?.()}>Open file</button>
+            <button type="button" className="btn btn-secondary btn-sm" onClick={() => sv2?.openFolderDialog?.()}>Open folder</button>
+          </div>
+        </div>
+      </div>
+    )
+  }
 
   // Live TIMC Light result for the active document. For markdown the engine returns both
   // an EARS-coverage and a section-completeness signal; the panel toggles between them.
@@ -200,10 +239,12 @@ export function StructureView() {
   const referencingCount = q ? ranked.filter((r) => r.doc.id !== activeId && r.matches > 0).length : 0
 
   return (
-    <div className="app-shell">
-      <Sidebar 
+    <div className={`app-shell ${collapsed ? 'sidebar-collapsed' : ''}`}>
+      <Sidebar
         brandTag="StructureView"
         activeNav="overview"
+        collapsed={collapsed}
+        onToggleCollapse={() => setCollapsed((c) => !c)}
         sections={[
           {
             label: 'Fleet',
@@ -285,10 +326,15 @@ export function StructureView() {
             <div className="sv-panel">
               <div className="sv-panel-hd">
                 <span className="sv-panel-title">Documents</span>
-                <div className="flex gap-2 items-center">
+                <span className="badge b-blue">{docs.length} files</span>
+              </div>
+              <div className="sv-panel-body">
+                {/* Open actions — full-width row so labels never clip in the narrow panel */}
+                <div className="flex gap-2" style={{marginBottom:'var(--s3)'}}>
                   <button
                     type="button"
                     className="btn btn-secondary btn-sm"
+                    style={{flex:1,justifyContent:'center'}}
                     onClick={() => (window as any).structview?.openFileDialog?.()}
                     title="Open a Markdown or JSON file (Ctrl+O)"
                   >
@@ -300,6 +346,7 @@ export function StructureView() {
                   <button
                     type="button"
                     className="btn btn-secondary btn-sm"
+                    style={{flex:1,justifyContent:'center'}}
                     onClick={() => (window as any).structview?.openFolderDialog?.()}
                     title="Open a folder of Markdown/JSON files (Ctrl+Shift+O)"
                   >
@@ -308,10 +355,7 @@ export function StructureView() {
                     </svg>
                     Open folder
                   </button>
-                  <span className="badge b-blue">{docs.length} files</span>
                 </div>
-              </div>
-              <div className="sv-panel-body">
                 <div className="active-doc-banner">
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
                     <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>
@@ -404,71 +448,23 @@ export function StructureView() {
               </div>
             </div>
 
-            {/* CENTER: EARS Signal Analysis */}
+            {/* CENTER: Document reader — renders the active file so it can be read */}
             <div className="sv-panel">
               <div className="sv-panel-hd">
-                <span className="sv-panel-title">EARS Signal Analysis</span>
-                <div className="flex gap-2">
-                  <span className="badge b-ok">5 patterns</span>
-                  <span className="badge b-blue">247 reqs</span>
-                </div>
+                <span className="sv-panel-title">Document</span>
+                <span className="badge b-muted">{activeDoc.name}</span>
               </div>
-              <div className="sv-panel-body">
-                <div style={{marginBottom:'var(--s5)'}}>
-                  <div style={{fontSize:'var(--xs)',color:'var(--txf)',textTransform:'uppercase',letterSpacing:'.07em',fontWeight:600,marginBottom:'var(--s3)'}}>
-                    Analyzing: {activeDoc.name}
-                  </div>
-                </div>
-
-                {signals.map((sig) => (
-                  <div key={sig.id} className={`signal-item sig-${sig.status}`}>
-                    <div className="sig-body">
-                      <div className="sig-pattern">
-                        <span className={`badge ${sig.status === 'pass' ? 'b-ok' : sig.status === 'warn' ? 'b-warn' : 'b-err'}`} style={{fontSize:10}}>
-                          {sig.pattern}
-                        </span>
-                        &nbsp;{sig.reqId}
-                      </div>
-                      <div className="sig-text">
-                        {sig.text.map((part, idx) => 
-                          EARS_KEYWORDS.has(part.trim().toUpperCase()) ? (
-                            <span key={idx} className="sig-kw">{part}</span>
-                          ) : (
-                            <span key={idx}>{part}</span>
-                          )
-                        )}
-                      </div>
-                      <div className="sig-meta">
-                        <span className={`dot dot-${sig.status === 'pass' ? 'ok' : sig.status === 'warn' ? 'warn' : 'err'}`} style={{width:6,height:6}}></span>
-                        {sig.meta}
-                      </div>
-                    </div>
-                    <span className={`sig-score ${sig.status}`}>{sig.score}</span>
-                  </div>
-                ))}
-
-                {/* Pattern summary */}
-                <div className="card-sm" style={{background:'var(--sf2)',borderRadius:'var(--r-md)',marginTop:'var(--s5)'}}>
-                  <div className="flex-between mb-3">
-                    <span className="t-xs text-muted fw-600" style={{textTransform:'uppercase',letterSpacing:'.06em'}}>Pattern Coverage</span>
-                    <span className="t-xs text-faint">47 requirements</span>
-                  </div>
-                  <div className="flex gap-4">
-                    <div className="flex items-center gap-2">
-                      <span className="dot dot-ok"></span>
-                      <span className="t-sm">38 PASS</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <span className="dot dot-warn"></span>
-                      <span className="t-sm">6 WARN</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <span className="dot dot-err"></span>
-                      <span className="t-sm">3 FAIL</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
+              <div
+                className="sv-panel-body doc-reader"
+                onClick={(e) => {
+                  const a = (e.target as HTMLElement).closest('a')
+                  if (a && a.getAttribute('href')) {
+                    e.preventDefault()
+                    ;(window as any).structview?.openExternal?.(a.getAttribute('href'))
+                  }
+                }}
+                dangerouslySetInnerHTML={{ __html: renderedDoc }}
+              />
             </div>
 
             {/* RIGHT: TIMC Panel — driven live by the TIMC Light engine */}
@@ -502,7 +498,7 @@ export function StructureView() {
                   <div style={{fontSize:'var(--xs)',color:'var(--txf)',textTransform:'uppercase',letterSpacing:'.06em',marginBottom:'var(--s2)'}}>
                     Composite Score
                   </div>
-                  <div style={{fontFamily:'var(--ff-display)',fontSize:'var(--2xl)',fontWeight:800,color:'var(--ft-gold)'}}>
+                  <div style={{fontFamily:'var(--ff-display)',fontSize:'var(--2xl)',fontWeight:800,color: compositeStatus === 'pass' ? 'var(--ok)' : compositeStatus === 'warn' ? 'var(--warn)' : 'var(--err)'}}>
                     {composite.toFixed(1)}
                   </div>
                   <div className="t-xs text-muted mt-2">

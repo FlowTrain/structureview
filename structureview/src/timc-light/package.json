@@ -1,0 +1,28 @@
+{
+  "name": "@trainyard/timc-light",
+  "version": "0.1.0",
+  "description": "Framework-free TIMC Light quality-signal engine — EARS coverage, JSON quality, section completeness, and BDD coverage. Runs in the browser and Node; shared by the StructureView desktop app and the Train Yard web platform.",
+  "type": "module",
+  "main": "./index.js",
+  "module": "./index.js",
+  "types": "./index.d.ts",
+  "sideEffects": false,
+  "files": [
+    "index.js",
+    "index.d.ts",
+    "engine.js",
+    "signals",
+    "README.md"
+  ],
+  "scripts": {
+    "test": "node engine.selftest.mjs"
+  },
+  "keywords": [
+    "ears",
+    "bdd",
+    "gherkin",
+    "spec-quality",
+    "timc"
+  ],
+  "license": "MIT"
+}

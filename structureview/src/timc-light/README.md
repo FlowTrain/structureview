@@ -9,8 +9,12 @@ It consumes the document the user is viewing and returns quality signals:
   scores what fraction of requirement lines follow one of the 5 EARS patterns.
 - **JSON quality** (`signals/json-quality.js`) — for JSON, a weighted 0–100 composite over
   parseability, null density, key consistency, nesting depth, and envelope shape.
-- **Engine** (`engine.js`) — detects document type, dispatches to the right signal,
-  aggregates the score, and decides whether to surface the once-per-session upgrade CTA.
+- **Section completeness** (`signals/section-completeness.js`) — for Markdown specs, checks
+  the 10 canonical required sections (spec-instructions.md §3).
+- **BDD coverage** (`signals/bdd-coverage.js`) — for Markdown specs, checks each Gherkin
+  scenario has a Given / When / Then.
+- **Engine** (`engine.js`) — detects document type, dispatches to the applicable signals,
+  blends the aggregate score, and decides whether to surface the upgrade CTA.
 
 Pure ESM, no framework or network dependencies — runs in the Electron renderer, the React
 bundle, and Node. Verify with:
@@ -18,6 +22,28 @@ bundle, and Node. Verify with:
 ```
 node src/timc-light/engine.selftest.mjs
 ```
+
+## Shared package: `@trainyard/timc-light`
+
+This directory is a self-contained, framework-free package (`package.json` + `index.js`
+barrel + `index.d.ts` types) so the **same engine** is consumed by both the StructureView
+desktop app and the Train Yard web platform — no fork, no rework. There is one public
+import surface:
+
+```js
+import { analyse } from '@trainyard/timc-light';
+
+const result = analyse(fileContents, 'markdown'); // or 'json'
+// → { documentType, signals: [...], aggregateScore, shouldShowCTA }
+```
+
+Consumers wire it up however suits them:
+
+- **This Electron app** — via the Vite `@timc` alias (`ui/vite.config.js`).
+- **The web platform** — add it as a workspace dependency once `src/timc-light/` is hoisted
+  to a shared location (a `packages/` workspace or its own repo). Physical relocation and
+  npm publication are follow-ups governed by S69 (design-system / shared-asset ownership);
+  the package boundary here makes that a move, not a rewrite.
 
 ## Provenance & corrections
 
