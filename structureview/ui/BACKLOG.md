@@ -2,6 +2,23 @@
 
 Tracked UI follow-ups (not yet implemented). Newest first.
 
+## Future capabilities (shared Electron + web — needs research)
+
+These are larger product capabilities that should live in **both** the Electron app and the
+enterprise web app (consume `@trainyard/ui`; only the shell differs). Not scoped yet.
+
+- **In-tool spec authoring — WYSIWYG Markdown + ADF editor.** Author specs directly in the
+  tool with a WYSIWYG editor that round-trips traditional Markdown *and* ADF (Atlassian
+  Document Format) for Confluence/Jira. High-value paired with the live TIMC Light analysers:
+  author a spec → see EARS / Sections / BDD quality update as you write. Research: editor
+  engine (e.g. ProseMirror/TipTap), MD↔ADF conversion, schema fidelity.
+
+- **Dual-terminal / dual-LLM chat — CCQG real-time quality antagonist.** A two-terminal,
+  two-LLM surface to run the LemonAid server experiment and the full CCQG real-time quality
+  antagonist (CCQG CL) — one model generating, one critiquing against the quality gates,
+  live. Research: terminal/PTY in Electron vs web (xterm.js), provider wiring, transcript
+  capture, how it ties into the engine + gates.
+
 ## From 2026-06-16 review
 
 - **Real EARS feedback view (green/yellow/red).** When a doc is selected, offer the original

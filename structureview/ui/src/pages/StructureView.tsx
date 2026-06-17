@@ -269,32 +269,18 @@ export function StructureView() {
             ]
           },
           {
+            // StructureView-only nav. Other products' items (TIMC Dashboard, CCQG Engine,
+            // Learnings, Reports/Export) live in their own contextual sidebars — see
+            // docs/screen-home-map.md.
             label: 'StructureView',
             items: [
               { id: 'overview', label: 'Overview', icon: 'grid', active: true },
-              { id: 'docs', label: 'Documents', icon: 'doc', badge: { text: '5', variant: 'blue' } },
-              { id: 'ears', label: 'EARS Analysis', icon: 'signal', badge: { text: '247', variant: 'blue' } },
-              { id: 'timc', label: 'TIMC Dashboard', icon: 'chart' },
+              { id: 'docs', label: 'Documents', icon: 'doc' },
+              { id: 'ears', label: 'EARS Analysis', icon: 'signal' },
+              { id: 'sections', label: 'Sections', icon: 'book' },
               { id: 'bdd', label: 'BDD Generator', icon: 'search' },
-              { id: 'reports', label: 'Reports & Export', icon: 'export' },
             ]
           },
-          {
-            label: 'CCQG Engine',
-            items: [
-              { id: 'compliance', label: 'Compliance Matrix', icon: 'shield', href: '/ccqg/compliance' },
-              { id: 'cicd', label: 'CI/CD Pipeline', icon: 'export', href: '/ccqg/cicd' },
-              { id: 'testplan', label: 'Test Plan', icon: 'doc', href: '/ccqg/test-plan' },
-              { id: 'trading', label: 'Trading Domain', icon: 'chart', href: '/ccqg/trading-domain' },
-            ]
-          },
-          {
-            label: 'Learnings',
-            items: [
-              { id: 'memory', label: 'Memory Store', icon: 'book' },
-              { id: 'mcp', label: 'MCP Tools', icon: 'chat' },
-            ]
-          }
         ]}
       />
 
