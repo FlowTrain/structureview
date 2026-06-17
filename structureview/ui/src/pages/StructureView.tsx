@@ -1,5 +1,7 @@
 import { useState, useEffect, useMemo } from 'react'
 import { marked } from 'marked'
+import hljs from 'highlight.js/lib/common'
+import 'highlight.js/styles/github-dark.css'
 import { Link } from 'react-router-dom'
 import { Sidebar } from '../components/layout/Sidebar'
 import { Topbar } from '../components/layout/Topbar'
@@ -19,6 +21,20 @@ function formatSize(bytes: number): string {
 function escapeHtml(s: string): string {
   return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
 }
+
+// Syntax-highlight fenced code blocks in the rendered document (highlight.js).
+const docRenderer = new marked.Renderer()
+docRenderer.code = (code: string, lang?: string) => {
+  const language = lang && hljs.getLanguage(lang) ? lang : null
+  let body: string
+  try {
+    body = language ? hljs.highlight(code, { language }).value : hljs.highlightAuto(code).value
+  } catch {
+    body = escapeHtml(code)
+  }
+  return `<pre><code class="hljs">${body}</code></pre>`
+}
+marked.use({ renderer: docRenderer })
 
 // Build a document record from raw content, analysed live by the engine.
 function makeDoc(opts: { id: string; name: string; icon: string; content: string; hint: string; size?: string }) {
