@@ -46,9 +46,11 @@ export function analyse(content, mimeHint) {
     signals = [scoreEarsCoverage(content), scoreSectionCompleteness(content), scoreBddCoverage(content)];
   }
 
-  const aggregateScore = signals.length === 0
-    ? 100
-    : signals.reduce((sum, s) => sum + s.score, 0) / signals.length;
+  // Strict composite: the average of all applicable signals. A spec missing its inline
+  // BDD scenarios takes the hit — the bar is intentionally high so pre-template specs
+  // (S12–S31) surface the work needed to bring them to the current standard.
+  const aggregateScore =
+    signals.length === 0 ? 100 : signals.reduce((sum, s) => sum + s.score, 0) / signals.length;
 
   const shouldShowCTA = signals.some(s => !s.canResolve && s.findings.length > 0);
 
