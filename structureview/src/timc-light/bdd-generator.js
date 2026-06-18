@@ -22,7 +22,7 @@ function extractACs(markdown) {
   const acs = [];
   // 1) Explicitly labelled criteria anywhere (AC01, REQ-3, ...)
   for (const line of lines) {
-    const m = line.match(/^\s*[-*]\s*(?:\[[ x]\]\s*)?\*{0,2}(AC\s?\d+|REQ-?\d+)\*{0,2}\s*[—:.\-]*\s*(.+)$/i);
+    const m = line.match(/^\s*[-*]\s*(?:\[[ x]\]\s*)?\*{0,2}(AC\s?\d+|REQ-?\d+)\*{0,2}\s*[—:.-]*\s*(.+)$/i);
     if (m) acs.push({ id: m[1].replace(/\s/g, ''), text: clean(m[2]) });
   }
   if (acs.length) return acs;
