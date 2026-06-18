@@ -23,9 +23,12 @@ export function scoreSectionCompleteness(markdown) {
   const haystack = headings.join('\n');
 
   const findings = [];
+  const sections = [];
   let present = 0;
   for (const section of REQUIRED_SECTIONS) {
-    if (section.re.test(haystack)) {
+    const ok = section.re.test(haystack);
+    sections.push({ label: section.label, present: ok });
+    if (ok) {
       present++;
     } else {
       findings.push({ message: `Missing required section: ${section.label}`, severity: 'warning' });
@@ -40,5 +43,6 @@ export function scoreSectionCompleteness(markdown) {
     findings,
     canResolve: true, // informational — does not trigger the upgrade CTA
     breakdown: { present, total },
+    sections,
   };
 }

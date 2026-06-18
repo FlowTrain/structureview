@@ -21,13 +21,16 @@ interface SidebarProps {
   brandTag?: string
   collapsed?: boolean
   onToggleCollapse?: () => void
+  onSelect?: (id: string) => void
 }
 
-export function Sidebar({ 
-  sections, 
+export function Sidebar({
+  sections,
   brandTag = 'Enterprise · v2.4',
   collapsed = false,
-  onToggleCollapse
+  onToggleCollapse,
+  activeNav,
+  onSelect
 }: SidebarProps) {
   return (
     <aside className="sidebar" role="navigation" aria-label="Main navigation">
@@ -55,7 +58,7 @@ export function Sidebar({
           <div className="sb-section" key={idx}>
             <div className="sb-section-lbl">{section.label}</div>
             {section.items.map((item) => (
-              <NavItemComponent key={item.id} item={item} />
+              <NavItemComponent key={item.id} item={item} onSelect={onSelect} active={activeNav === item.id} />
             ))}
           </div>
         ))}
@@ -75,16 +78,13 @@ export function Sidebar({
   )
 }
 
-function NavItemComponent({ item }: { item: NavItem }) {
+function NavItemComponent({ item, onSelect, active }: { item: NavItem; onSelect?: (id: string) => void; active?: boolean }) {
   const Icon = getIcon(item.icon)
-  
+  const isActive = active ?? item.active
+
   if (item.href && item.href !== '#') {
     return (
-      <Link 
-        to={item.href} 
-        className={`nav-item ${item.active ? 'active' : ''}`}
-        title={item.label}
-      >
+      <Link to={item.href} className={`nav-item ${isActive ? 'active' : ''}`} title={item.label}>
         <Icon />
         <span className="nav-label">{item.label}</span>
         {item.badge && (
@@ -95,12 +95,16 @@ function NavItemComponent({ item }: { item: NavItem }) {
       </Link>
     )
   }
-  
+
   return (
-    <a 
-      href="#" 
-      className={`nav-item ${item.active ? 'active' : ''}`}
+    <a
+      href="#"
+      className={`nav-item ${isActive ? 'active' : ''}`}
       title={item.label}
+      onClick={(e) => {
+        e.preventDefault()
+        onSelect?.(item.id)
+      }}
     >
       <Icon />
       <span className="nav-label">{item.label}</span>

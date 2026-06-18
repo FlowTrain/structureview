@@ -24,7 +24,10 @@ export function scoreBddCoverage(markdown) {
   }
   push();
 
-  const total = scenarios.length;
+  // Precision: ignore prose lines that merely contain 'Scenario:'/'Example:' —
+  // a real Gherkin scenario has at least one Given/When/Then in its block.
+  const real = scenarios.filter((s) => s.given || s.when || s.then);
+  const total = real.length;
 
   if (total === 0) {
     return {
@@ -39,7 +42,7 @@ export function scoreBddCoverage(markdown) {
 
   const findings = [];
   let wellFormed = 0;
-  for (const s of scenarios) {
+  for (const s of real) {
     if (s.given && s.when && s.then) {
       wellFormed++;
     } else {

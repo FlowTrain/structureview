@@ -7,3 +7,4 @@ export { classifyRequirement, scoreEarsCoverage, isRequirement } from './signals
 export { scoreJsonQuality } from './signals/json-quality.js';
 export { scoreSectionCompleteness } from './signals/section-completeness.js';
 export { scoreBddCoverage } from './signals/bdd-coverage.js';
+export { generateBdd } from './bdd-generator.js';

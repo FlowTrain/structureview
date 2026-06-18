@@ -5,6 +5,7 @@ import { classifyRequirement, scoreEarsCoverage, isRequirement } from './signals
 import { scoreJsonQuality } from './signals/json-quality.js';
 import { scoreSectionCompleteness } from './signals/section-completeness.js';
 import { scoreBddCoverage } from './signals/bdd-coverage.js';
+import { generateBdd } from './bdd-generator.js';
 
 let pass = 0, fail = 0;
 const approx = (a, b) => Math.abs(a - b) < 1e-9;
@@ -85,6 +86,21 @@ const bmiss = scoreBddCoverage('Scenario: a\n  Given x\n  When y');
 ok('bdd missing Then → 0 with finding', bmiss.score === 0 && bmiss.findings[0].message.includes('Then'));
 ok('bdd none → 0 with finding', scoreBddCoverage('# prose').score === 0 && scoreBddCoverage('# x').findings.length === 1);
 ok('bdd breakdown counts scenarios', scoreBddCoverage('Scenario: a\n Given x\n When y\n Then z\nScenario: b\n When q\n Then r').breakdown.scenarios === 2);
+
+// BDD coverage precision — prose "Scenario:/Example:" lines without Given/When/Then are ignored
+ok('bdd precision: prose scenarios ignored', scoreBddCoverage('- Example: ["a","b"]\n- Scenario: foo bar').breakdown.scenarios === 0);
+
+// Section completeness — per-section present/missing list
+const secList = scoreSectionCompleteness('## Objective\n## Scope');
+ok('sections list length 10', secList.sections.length === 10);
+ok('sections present flag', secList.sections.find((s) => s.label === 'Objective').present === true);
+
+// BDD generator — job story → scenario, AC fallback, empty
+const gen1 = generateBdd('# Demo\n\nWhen I review a spec, I want to check quality, so I can fix gaps.');
+ok('generator: job story parsed', gen1.jobStories.length === 1 && /Scenario: AC01/.test(gen1.gherkin));
+const gen2 = generateBdd('## Acceptance Criteria\n- The system shall log events\n- The system shall alert on failure');
+ok('generator: AC fallback', gen2.jobStories.length === 0 && gen2.acceptanceCriteria.length === 2);
+ok('generator: gherkin always returned', typeof generateBdd('# Empty doc').gherkin === 'string');
 
 console.log(`\n${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);

@@ -46,10 +46,27 @@ export interface JsonQualityBreakdown {
 export function analyse(content: string, mimeHint?: string): EngineOutput;
 export function detectDocumentType(content: string, mimeHint?: string): DocumentType;
 
-export function scoreEarsCoverage(markdown: string): SignalResult;
+export interface RequirementDetail {
+  line: number;
+  text: string;
+  /** EARS pattern label (UBIQUITOUS / EVENT-DRIVEN / WHILE-DO / IF-THEN / WHERE) or 'NOT DETECTED'. */
+  pattern: string;
+  status: 'pass' | 'warn' | 'fail';
+  score: number;
+}
+
+export function scoreEarsCoverage(markdown: string): SignalResult & { requirements: RequirementDetail[] };
 export function classifyRequirement(line: string): string | null;
 export function isRequirement(line: string): boolean;
 
 export function scoreJsonQuality(content: string): SignalResult & { breakdown: JsonQualityBreakdown };
 export function scoreSectionCompleteness(markdown: string): SignalResult & { breakdown: { present: number; total: number } };
 export function scoreBddCoverage(markdown: string): SignalResult & { breakdown: { scenarios: number; wellFormed: number } };
+
+export interface JobStory {
+  situation: string;
+  motivation: string;
+  outcome: string;
+}
+/** Deterministic Gherkin scaffold from a spec's Job Stories (S39 skill pipeline, non-LLM). */
+export function generateBdd(markdown: string): { jobStories: JobStory[]; gherkin: string };

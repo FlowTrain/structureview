@@ -6,6 +6,7 @@ import { Link } from 'react-router-dom'
 import { Sidebar } from '../components/layout/Sidebar'
 import { Topbar } from '../components/layout/Topbar'
 import { analyse } from '@timc/engine.js'
+import { generateBdd } from '@timc/bdd-generator.js'
 import { SAMPLES } from '../timc-samples.js'
 
 // Score helpers driven by the real TIMC Light engine output.
@@ -102,8 +103,9 @@ export function StructureView() {
   const [docs, setDocs] = useState(SAMPLE_DOCS)
   const [activeId, setActiveId] = useState(SAMPLE_DOCS[0].id)
   const [query, setQuery] = useState('')
-  const [mode, setMode] = useState<'ears' | 'sections' | 'bdd'>('ears')
+  const [mode, setMode] = useState<'overview' | 'document' | 'ears' | 'sections' | 'bdd'>('overview')
   const [collapsed, setCollapsed] = useState(false)
+  const [genFor, setGenFor] = useState<{ id: string; gherkin: string; stories: number; acs: number } | null>(null)
   const activeDoc = docs.find((d) => d.id === activeId) ?? docs[0]
 
   function removeDoc(id: string) {
@@ -213,8 +215,16 @@ export function StructureView() {
   const hasModes = !!(earsSig && sectionSig && bddSig)
   const byMode: Record<string, any> = { ears: earsSig, sections: sectionSig, bdd: bddSig }
   const signal = jsonSig ?? byMode[mode] ?? earsSig ?? timc.signals[0]
-  const composite = signal ? signal.score : timc.aggregateScore
+  const overallView = mode === 'overview' || mode === 'document'
+  const composite = overallView && !jsonSig ? timc.aggregateScore : signal ? signal.score : timc.aggregateScore
   const compositeStatus = statusFor(composite)
+
+  // EARS per-requirement analysis (for the EARS view + its pattern-coverage summary).
+  const earsReqs: any[] = earsSig?.requirements ?? []
+  const earsPass = earsReqs.filter((r) => r.status === 'pass').length
+  const earsWarn = earsReqs.filter((r) => r.status === 'warn').length
+  const earsFail = earsReqs.filter((r) => r.status === 'fail').length
+  const earsAvg = earsReqs.length ? Math.round(earsReqs.reduce((s, r) => s + r.score, 0) / earsReqs.length) : 0
 
   // The breakdown shown depends on which signal is in view.
   const metrics: { label: string; value: number }[] =
@@ -258,7 +268,17 @@ export function StructureView() {
     <div className={`app-shell ${collapsed ? 'sidebar-collapsed' : ''}`}>
       <Sidebar
         brandTag="StructureView"
-        activeNav="overview"
+        activeNav={mode === 'document' ? 'docs' : mode}
+        onSelect={(id) => {
+          const map: Record<string, 'overview' | 'document' | 'ears' | 'sections' | 'bdd'> = {
+            overview: 'overview',
+            docs: 'document',
+            ears: 'ears',
+            sections: 'sections',
+            bdd: 'bdd',
+          }
+          if (map[id]) setMode(map[id])
+        }}
         collapsed={collapsed}
         onToggleCollapse={() => setCollapsed((c) => !c)}
         sections={[
@@ -450,23 +470,166 @@ export function StructureView() {
               </div>
             </div>
 
-            {/* CENTER: Document reader — renders the active file so it can be read */}
+            {/* CENTER: Document reader + live analysis views (Document / EARS / Sections / BDD) */}
             <div className="sv-panel">
               <div className="sv-panel-hd">
-                <span className="sv-panel-title">Document</span>
+                <div className="flex gap-2 items-center">
+                  {(['document', ...(hasModes ? (['ears', 'sections', 'bdd'] as const) : [])] as const).map((t) => (
+                    <button
+                      key={t}
+                      type="button"
+                      onClick={() => setMode(t)}
+                      className={`btn btn-sm ${mode === t ? 'btn-primary' : 'btn-secondary'}`}
+                    >
+                      {t === 'document' ? 'Document' : t === 'ears' ? 'EARS' : t === 'sections' ? 'Sections' : 'BDD'}
+                    </button>
+                  ))}
+                </div>
                 <span className="badge b-muted">{activeDoc.name}</span>
               </div>
-              <div
-                className="sv-panel-body doc-reader"
-                onClick={(e) => {
-                  const a = (e.target as HTMLElement).closest('a')
-                  if (a && a.getAttribute('href')) {
-                    e.preventDefault()
-                    ;(window as any).structview?.openExternal?.(a.getAttribute('href'))
-                  }
-                }}
-                dangerouslySetInnerHTML={{ __html: renderedDoc }}
-              />
+
+              {mode === 'overview' ? (
+                <div className="sv-panel-body">
+                  <div style={{maxWidth:600}}>
+                    <div style={{fontFamily:'var(--ff-display)',fontSize:'var(--xl)',fontWeight:800,color:'var(--ft-blue)'}}>StructureView</div>
+                    <p className="t-sm text-muted" style={{margin:'var(--s2) 0 var(--s4)'}}>
+                      A clean reader and quality lens for Markdown specs and JSON. Open a file or folder,
+                      read it in <strong>Document</strong>, and check its quality live:
+                    </p>
+                    <div className="t-sm" style={{lineHeight:2}}>
+                      <div><span className="dot dot-ok" style={{width:7,height:7,marginRight:8,display:'inline-block'}}></span><strong>EARS</strong> — are requirements written in EARS notation?</div>
+                      <div><span className="dot dot-ok" style={{width:7,height:7,marginRight:8,display:'inline-block'}}></span><strong>Sections</strong> — does the spec contain all 10 required sections?</div>
+                      <div><span className="dot dot-ok" style={{width:7,height:7,marginRight:8,display:'inline-block'}}></span><strong>BDD</strong> — are Gherkin scenarios well-formed? Generate scaffolds from job stories.</div>
+                    </div>
+                    <div className="flex gap-3" style={{marginTop:'var(--s5)'}}>
+                      <button type="button" className="btn btn-secondary btn-sm" onClick={() => (window as any).structview?.openFileDialog?.()}>Open file</button>
+                      <button type="button" className="btn btn-secondary btn-sm" onClick={() => (window as any).structview?.openFolderDialog?.()}>Open folder</button>
+                      <button type="button" className="btn btn-primary btn-sm" onClick={() => setMode('document')}>Read current document</button>
+                    </div>
+                  </div>
+                </div>
+              ) : mode === 'document' ? (
+                <div
+                  className="sv-panel-body doc-reader"
+                  onClick={(e) => {
+                    const a = (e.target as HTMLElement).closest('a')
+                    if (a && a.getAttribute('href')) {
+                      e.preventDefault()
+                      ;(window as any).structview?.openExternal?.(a.getAttribute('href'))
+                    }
+                  }}
+                  dangerouslySetInnerHTML={{ __html: renderedDoc }}
+                />
+              ) : (
+                <div className="sv-panel-body">
+                  {/* EARS analysis — per requirement */}
+                  {mode === 'ears' && (
+                    <>
+                      <div className="flex-between mb-3">
+                        <span className="t-xs text-muted fw-600" style={{textTransform:'uppercase',letterSpacing:'.06em'}}>EARS Signal Analysis</span>
+                        <span className="badge b-blue">{earsReqs.length} requirements</span>
+                      </div>
+                      {earsReqs.length === 0 && (
+                        <div className="t-xs text-faint" style={{padding:'var(--s3) 0'}}>No requirement lines detected in this document.</div>
+                      )}
+                      {earsReqs.map((q, i) => (
+                        <div key={i} className={`signal-item sig-${q.status}`}>
+                          <div className="sig-body">
+                            <div className="sig-pattern">
+                              <span className={`badge ${q.status === 'pass' ? 'b-ok' : q.status === 'warn' ? 'b-warn' : 'b-err'}`} style={{fontSize:10}}>{q.pattern}</span>
+                              &nbsp;<span className="t-xs text-faint">line {q.line}</span>
+                            </div>
+                            <div className="sig-text">{q.text}</div>
+                          </div>
+                          <span className="sig-score" style={{color: q.status === 'pass' ? 'var(--ok)' : q.status === 'warn' ? 'var(--warn)' : 'var(--err)'}}>{q.score}</span>
+                        </div>
+                      ))}
+                      {earsReqs.length > 0 && (
+                        <div className="card-sm" style={{background:'var(--sf2)',borderRadius:'var(--r-md)',marginTop:'var(--s4)'}}>
+                          <div className="flex gap-4 items-center">
+                            <span className="t-sm" style={{color:'var(--ok)'}}>{earsPass} PASS</span>
+                            <span className="t-sm" style={{color:'var(--warn)'}}>{earsWarn} WARN</span>
+                            <span className="t-sm" style={{color:'var(--err)'}}>{earsFail} FAIL</span>
+                            <span className="t-sm ml-auto text-muted">Avg {earsAvg}</span>
+                          </div>
+                        </div>
+                      )}
+                    </>
+                  )}
+
+                  {/* Section completeness — present / missing */}
+                  {mode === 'sections' && sectionSig && (
+                    <>
+                      <div className="flex-between mb-3">
+                        <span className="t-xs text-muted fw-600" style={{textTransform:'uppercase',letterSpacing:'.06em'}}>Section Completeness</span>
+                        <span className="badge b-blue">{sectionSig.breakdown.present}/{sectionSig.breakdown.total} present</span>
+                      </div>
+                      {(sectionSig.sections || []).map((sec: any, i: number) => (
+                        <div key={i} className="t-sm flex items-center gap-2" style={{padding:'var(--s2) 0',borderBottom:'1px solid var(--bd)'}}>
+                          <span className={`dot ${sec.present ? 'dot-ok' : 'dot-warn'}`} style={{width:8,height:8,flexShrink:0}}></span>
+                          <span style={{color: sec.present ? 'var(--tx)' : 'var(--txm)'}}>{sec.label}</span>
+                          <span className="ml-auto t-xs" style={{color: sec.present ? 'var(--ok)' : 'var(--warn)'}}>{sec.present ? 'present' : 'missing'}</span>
+                        </div>
+                      ))}
+                    </>
+                  )}
+
+                  {/* BDD — scenarios */}
+                  {mode === 'bdd' && bddSig && (
+                    <>
+                      <div className="flex-between mb-3">
+                        <span className="t-xs text-muted fw-600" style={{textTransform:'uppercase',letterSpacing:'.06em'}}>BDD Coverage</span>
+                        <span className="badge b-blue">{bddSig.breakdown.wellFormed}/{bddSig.breakdown.scenarios} well-formed</span>
+                      </div>
+                      {bddSig.findings.length === 0 && bddSig.breakdown.scenarios > 0 && (
+                        <div className="t-sm" style={{color:'var(--ok)',padding:'var(--s2) 0'}}>All scenarios have Given / When / Then.</div>
+                      )}
+                      {bddSig.findings.map((f: any, i: number) => (
+                        <div key={i} className="t-sm" style={{padding:'var(--s2) 0',borderBottom:'1px solid var(--bd)'}}>
+                          <span className="dot dot-warn" style={{width:6,height:6,marginRight:8,display:'inline-block'}}></span>
+                          {f.message}
+                        </div>
+                      ))}
+
+                      {/* BDD Generator — scaffold Gherkin from the spec's job stories (CCQG S39 skill pipeline) */}
+                      <div className="divider" style={{marginTop:'var(--s4)'}}></div>
+                      <div className="flex-between mb-3">
+                        <span className="t-xs text-muted fw-600" style={{textTransform:'uppercase',letterSpacing:'.06em'}}>BDD Generator</span>
+                        <button
+                          type="button"
+                          className="btn btn-secondary btn-sm"
+                          onClick={() => {
+                            const g = generateBdd(activeDoc.content)
+                            setGenFor({ id: activeId, gherkin: g.gherkin, stories: g.jobStories.length, acs: g.acceptanceCriteria.length })
+                          }}
+                        >
+                          Generate scenarios
+                        </button>
+                      </div>
+                      {genFor?.id === activeId && (
+                        <>
+                          <div className="t-xs text-muted mb-2">
+                            {genFor.stories > 0
+                              ? `${genFor.stories} job stor${genFor.stories === 1 ? 'y' : 'ies'} → scenarios`
+                              : genFor.acs > 0
+                                ? `${genFor.acs} acceptance criteria → scenarios`
+                                : 'No job stories or acceptance criteria found — add a Job Story: “When …, I want to …, so I can …”'}
+                            {' · refine with Quality Guardian '}
+                            <button
+                              type="button"
+                              onClick={() => (navigator as any).clipboard?.writeText(genFor.gherkin)}
+                              style={{marginLeft:'var(--s2)',background:'none',border:'none',color:'var(--ft-blue)',cursor:'pointer'}}
+                            >
+                              Copy
+                            </button>
+                          </div>
+                          <pre className="doc-json" style={{whiteSpace:'pre-wrap'}}>{genFor.gherkin}</pre>
+                        </>
+                      )}
+                    </>
+                  )}
+                </div>
+              )}
             </div>
 
             {/* RIGHT: TIMC Panel — driven live by the TIMC Light engine */}
@@ -478,23 +641,6 @@ export function StructureView() {
                 </span>
               </div>
               <div className="sv-panel-body">
-                {/* Analysis mode toggle — markdown specs carry both EARS and Section signals */}
-                {hasModes && (
-                  <div className="flex gap-2" style={{marginBottom:'var(--s4)'}}>
-                    {(['ears', 'sections', 'bdd'] as const).map((m) => (
-                      <button
-                        key={m}
-                        type="button"
-                        onClick={() => setMode(m)}
-                        className={`btn btn-sm ${mode === m ? 'btn-primary' : 'btn-secondary'}`}
-                        style={{flex:1,justifyContent:'center'}}
-                      >
-                        {m === 'ears' ? 'EARS' : m === 'sections' ? 'Sections' : 'BDD'}
-                      </button>
-                    ))}
-                  </div>
-                )}
-
                 {/* Composite score */}
                 <div className="timc-composite">
                   <div style={{fontSize:'var(--xs)',color:'var(--txf)',textTransform:'uppercase',letterSpacing:'.06em',marginBottom:'var(--s2)'}}>
@@ -504,7 +650,7 @@ export function StructureView() {
                     {composite.toFixed(1)}
                   </div>
                   <div className="t-xs text-muted mt-2">
-                    {signal ? `${signal.type} · ${timc.documentType}` : 'No signals'}
+                    {overallView ? `overall · ${timc.documentType}` : signal ? `${signal.type} · ${timc.documentType}` : 'No signals'}
                   </div>
                 </div>
 
@@ -534,9 +680,13 @@ export function StructureView() {
                       Upgrade to Quality Guardian
                     </div>
                     <div className="t-xs text-muted mb-3">
-                      {ctaSignal.type === 'ears-coverage'
-                        ? `Quality Guardian found ${ctaSignal.findings.length} requirement${ctaSignal.findings.length === 1 ? '' : 's'} not in EARS format in this document. It can rewrite them and track coverage across your entire project.`
-                        : `This response has a structural quality score of ${Math.round(ctaSignal.score)}/100. Quality Guardian audits response schemas against your OpenAPI spec.`}
+                      {mode === 'bdd'
+                        ? `Quality Guardian's BDD Generator expands your job stories into full Gherkin — edge cases, Examples tables, and TypeScript step definitions — reviewed against your quality gates.`
+                        : mode === 'sections'
+                          ? `Quality Guardian enforces spec completeness across your whole project and blocks PRs that drop required sections.`
+                          : ctaSignal.type === 'ears-coverage'
+                            ? `Quality Guardian found ${ctaSignal.findings.length} requirement${ctaSignal.findings.length === 1 ? '' : 's'} not in EARS format in this document. It can rewrite them and track coverage across your entire project.`
+                            : `This response has a structural quality score of ${Math.round(ctaSignal.score)}/100. Quality Guardian audits response schemas against your OpenAPI spec.`}
                     </div>
                     <Link to="/quality-guardian" className="btn btn-secondary btn-sm w-full" style={{justifyContent:'center'}}>
                       Preview Quality Guardian
