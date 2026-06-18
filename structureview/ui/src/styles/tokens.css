@@ -1,0 +1,42 @@
+/* ───────────────────────────────────────────────────────────────────────────
+   @trainyard/ui token bridge — S69 token remap, step 1.
+
+   Vendors the canonical Train Yard design-system token VALUES (from
+   trainyard-design-system/tokens/design-tokens.json) and re-points the prototype's
+   `flowtrain.css` brand/status variables at them, so this app consumes design-system
+   tokens without rewriting every component. Import this AFTER flowtrain.css so these
+   `:root` definitions win over flowtrain's hardcoded values.
+
+   Scope of step 1: brand + semantic status colours + radius (the safe, identical-or-near
+   set). Surfaces / text / spacing / display font stay on flowtrain for now — step 2 brings
+   those onto the full @trainyard/ui theme (globals.css), which is HSL/theme-based.
+   ─────────────────────────────────────────────────────────────────────────── */
+
+:root {
+  /* Design-system tokens (canonical values) */
+  --primary: #2baee4;
+  --purple-accent: #5a4fcf;
+  --fleet-roundhouse: #12121a;
+  --fleet-deep-bg: #0a0a0f;
+  --fleet-gold: #d4af37;
+  --color-success: #22c55e;
+  --color-warning: #f59e0b;
+  --color-error: #ef4444;
+  --color-muted: #6b7280;
+  --radius-sm: 0.25rem;
+  --radius-md: 0.5rem;
+  --radius-lg: 0.75rem;
+  --radius-full: 9999px;
+
+  /* Bridge: flowtrain variable → design-system token */
+  --ft-blue: var(--primary);
+  --ft-purple: var(--purple-accent);
+  --ft-gold: var(--fleet-gold);
+  --ok: var(--color-success);
+  --warn: var(--color-warning);
+  --err: var(--color-error);
+  --bg: var(--fleet-deep-bg);
+  --r-sm: var(--radius-sm);
+  --r-md: var(--radius-md);
+  --r-lg: var(--radius-lg);
+}
