@@ -163,7 +163,3 @@ covering four edge-case categories: null/missing, boundary, auth, and concurrenc
 ---
 
 ## Out of scope
-
-TIMC Light examines **one document at a time**. It does not do cross-document traceability,
-project-level aggregation, agent-driven rewrites, or compliance-artifact generation — those
-are Quality Guardian capabilities.

@@ -25,6 +25,15 @@ Dispositions use the S69 categories: `extract-component`, `extract-pattern`,
 
 ## 2. Token remap — `flowtrain.css` → `@trainyard/ui`
 
+**Decision (2026-06):** the **canonical** token source is
+`trainyard-design-system/tokens/design-tokens.json` (**blue primary `#2BAEE4`**, Space
+Grotesk). The yellow-primary "Dispatch Design System"
+(`roundhousehq-ui-experiment/src/styles/tokens.css`) currently deployed on
+qualityguardian.flowtrain.io is **drift to reconcile back** to the canonical set, not a
+second standard. StructureView stays blue/cyan-forward. Step 1 of the remap is wired in
+`ui/src/styles/tokens.css` (brand + status + radius + display font); surfaces / text /
+spacing are step 2 (they're HSL/theme-based in the design system's `globals.css`).
+
 `@trainyard/ui` (S32-derived) uses shadcn-style semantic tokens. Mapping for the variables
 this app actually uses:
 
@@ -44,11 +53,4 @@ this app actually uses:
 | `--r-sm` / `--r-md`         | `--radius-sm` / `--radius-md`                           |                                                                                                |
 | `--s1…--s5` (spacing)       | design-system spacing scale / Tailwind                  | flowtrain spacing has no token equivalent yet — map to the scale or Tailwind utilities.        |
 
-Code-block colors come from a `highlight.js` theme (`github-dark`); align that to design-system
-surface/contrast tokens, or ship a tokenized highlight theme, when extracting the reader.
-
-## 3. Open decisions / handoffs
-
-1. **Brand primary** — `--ft-blue` vs `@trainyard/ui --primary`. Needs the S69 / brand call before remap.
-2. **Engine home** — which shared location owns `@trainyard/timc-light` (`packages/` workspace vs standalone repo) and its publish cadence (S69 explicitly defers npm publication).
-3. **Shell ownership** — Sidebar/Topbar promotion is governed by S46 (RoundhouseShell); this app's collapse wiring is a candidate, not the canonical implementation.
+Code-block colors come from a `highlight.js` theme (`git

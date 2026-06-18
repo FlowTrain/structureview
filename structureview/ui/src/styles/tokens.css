@@ -1,28 +1,31 @@
 /* ───────────────────────────────────────────────────────────────────────────
    @trainyard/ui token bridge — S69 token remap, step 1.
 
-   Vendors the canonical Train Yard design-system token VALUES (from
-   trainyard-design-system/tokens/design-tokens.json) and re-points the prototype's
-   `flowtrain.css` brand/status variables at them, so this app consumes design-system
-   tokens without rewriting every component. Import this AFTER flowtrain.css so these
-   `:root` definitions win over flowtrain's hardcoded values.
+   CANONICAL SOURCE: trainyard-design-system/tokens/design-tokens.json (blue primary,
+   Space Grotesk). This is the agreed go-forward design system; the yellow-primary
+   "Dispatch" tokens deployed on qualityguardian.flowtrain.io are drift to be reconciled
+   back to this — see docs/S69-structureview-disposition.md.
 
-   Scope of step 1: brand + semantic status colours + radius (the safe, identical-or-near
-   set). Surfaces / text / spacing / display font stay on flowtrain for now — step 2 brings
-   those onto the full @trainyard/ui theme (globals.css), which is HSL/theme-based.
+   Re-points the prototype's flowtrain.css brand/status/radius/font variables at the design
+   system so this app consumes @trainyard/ui values without rewriting components. Import
+   AFTER flowtrain.css so these :root definitions win. StructureView stays blue/cyan-forward
+   (primary = #2BAEE4). Surfaces / text / spacing stay on flowtrain for step 1 — those are
+   HSL/theme-based in the design system's globals.css and come in step 2.
    ─────────────────────────────────────────────────────────────────────────── */
+
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700;800&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
 
 :root {
   /* Design-system tokens (canonical values) */
   --primary: #2baee4;
   --purple-accent: #5a4fcf;
-  --fleet-roundhouse: #12121a;
-  --fleet-deep-bg: #0a0a0f;
   --fleet-gold: #d4af37;
+  --fleet-deep-bg: #0a0a0f;
   --color-success: #22c55e;
   --color-warning: #f59e0b;
   --color-error: #ef4444;
-  --color-muted: #6b7280;
+  --font-display: 'Space Grotesk', 'Inter', system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, monospace;
   --radius-sm: 0.25rem;
   --radius-md: 0.5rem;
   --radius-lg: 0.75rem;
@@ -36,6 +39,8 @@
   --warn: var(--color-warning);
   --err: var(--color-error);
   --bg: var(--fleet-deep-bg);
+  --ff-display: var(--font-display);
+  --ff-mono: var(--font-mono);
   --r-sm: var(--radius-sm);
   --r-md: var(--radius-md);
   --r-lg: var(--radius-lg);

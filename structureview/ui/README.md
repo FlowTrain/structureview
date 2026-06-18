@@ -17,6 +17,23 @@ npm start              # launch Electron — it loads renderer-dist when present
 
 During UI development you can run the Vite dev server with `npm run ui:dev`.
 
+## Known npm-audit advisories (accepted, dev-only)
+
+`npm install` reports a couple of advisories (e.g. "2 vulnerabilities (1 moderate, 1 high)").
+These are **accepted risk** and require no action:
+
+- They originate from **`esbuild`'s development server**, inherited transitively through
+  **`vite`** — a `devDependency` (advisory [GHSA-67mh-4wv8-2f99](https://github.com/advisories/GHSA-67mh-4wv8-2f99)
+  and successors).
+- `vite`/`esbuild` are **build-time only**. They produce `../src/renderer-dist` and are not
+  part of the shipped Electron app — the packaged renderer contains no esbuild.
+- The advisory only applies while the **dev server** (`npm run ui:dev`) is running and a
+  malicious web page targets its port — not a realistic exposure for a desktop build tool.
+- The CI quality gate does **not** run `npm audit`, so these do not block anything.
+- **Do not run `npm audit fix --force`** — it jumps to a breaking major (vite 8). Revisit
+  when vite/esbuild ship a clean fix; bumping to vite 7 reduces the set but leaves a low
+  dev-only advisory.
+
 ## How it loads
 
 `src/main/index.js` loads `src/renderer-dist/index.html` when it exists, and otherwise
