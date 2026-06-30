@@ -1,26 +1,31 @@
 /* ───────────────────────────────────────────────────────────────────────────
-   @trainyard/ui token bridge — S69 token remap, step 1.
+   @trainyard/ui token bridge — S69 token remap, steps 1 + 2.
 
-   CANONICAL SOURCE: trainyard-design-system/tokens/design-tokens.json (blue primary,
-   Space Grotesk). This is the agreed go-forward design system; the yellow-primary
-   "Dispatch" tokens deployed on qualityguardian.flowtrain.io are drift to be reconciled
-   back to this — see docs/S69-structureview-disposition.md.
+   CANONICAL SOURCE: trainyard-design-system (blue primary #2BAEE4, Space Grotesk,
+   shadcn-style HSL surface/text tokens in its globals.css). The yellow-primary "Dispatch"
+   tokens deployed on qualityguardian.flowtrain.io are drift to reconcile back — see
+   docs/S69-structureview-disposition.md.
 
-   Re-points the prototype's flowtrain.css brand/status/radius/font variables at the design
-   system so this app consumes @trainyard/ui values without rewriting components. Import
-   AFTER flowtrain.css so these :root definitions win. StructureView stays blue/cyan-forward
-   (primary = #2BAEE4). Surfaces / text / spacing stay on flowtrain for step 1 — those are
-   HSL/theme-based in the design system's globals.css and come in step 2.
+   Re-points the prototype's flowtrain.css variables at the design system so this app
+   consumes @trainyard/ui values without rewriting components. Import AFTER flowtrain.css so
+   these :root definitions win. StructureView stays blue/cyan-forward (primary = #2BAEE4).
+
+   Step 1 — brand + status + radius + display font.
+   Step 2 — surfaces + text + border, mapped onto the design system's dark-theme semantic
+   tokens (HSL components, used as hsl(var(--token))). The DS dark palette is flatter than
+   flowtrain's 4-level surface scale, so intermediate surfaces are derived from the same hue
+   to preserve depth. Spacing stays on flowtrain (no clean DS equivalent yet).
+   VERIFY VISUALLY after build — these shift the app from flowtrain's purple-tinted dark to
+   the design system's neutral navy; any level is a one-line tweak here.
    ─────────────────────────────────────────────────────────────────────────── */
 
 @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700;800&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
 
 :root {
-  /* Design-system tokens (canonical values) */
+  /* ── Step 1: brand / status / radius / fonts (canonical values) ── */
   --primary: #2baee4;
   --purple-accent: #5a4fcf;
   --fleet-gold: #d4af37;
-  --fleet-deep-bg: #0a0a0f;
   --color-success: #22c55e;
   --color-warning: #f59e0b;
   --color-error: #ef4444;
@@ -31,6 +36,14 @@
   --radius-lg: 0.75rem;
   --radius-full: 9999px;
 
+  /* ── Step 2: surface / text / border (design-system dark theme, shadcn HSL) ── */
+  --background: 240 10% 4%;
+  --foreground: 0 0% 98%;
+  --card: 240 10% 4%;
+  --muted: 240 4% 16%;
+  --muted-foreground: 240 5% 65%;
+  --border: 240 4% 16%;
+
   /* Bridge: flowtrain variable → design-system token */
   --ft-blue: var(--primary);
   --ft-purple: var(--purple-accent);
@@ -38,10 +51,18 @@
   --ok: var(--color-success);
   --warn: var(--color-warning);
   --err: var(--color-error);
-  --bg: var(--fleet-deep-bg);
   --ff-display: var(--font-display);
   --ff-mono: var(--font-mono);
   --r-sm: var(--radius-sm);
   --r-md: var(--radius-md);
   --r-lg: var(--radius-lg);
+
+  --bg: hsl(var(--background)); /* 240 10% 4% ≈ flowtrain #0a0a0f */
+  --sf: hsl(240 8% 8%); /* derived level-1 surface */
+  --sf2: hsl(var(--muted)); /* 240 4% 16% raised surface */
+  --sf3: hsl(240 4% 21%); /* derived level-3 surface */
+  --bd: hsl(var(--border));
+  --tx: hsl(var(--foreground));
+  --txm: hsl(var(--muted-foreground));
+  --txf: hsl(240 5% 42%); /* derived faint text */
 }

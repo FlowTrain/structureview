@@ -30,9 +30,11 @@ Dispositions use the S69 categories: `extract-component`, `extract-pattern`,
 Grotesk). The yellow-primary "Dispatch Design System"
 (`roundhousehq-ui-experiment/src/styles/tokens.css`) currently deployed on
 qualityguardian.flowtrain.io is **drift to reconcile back** to the canonical set, not a
-second standard. StructureView stays blue/cyan-forward. Step 1 of the remap is wired in
-`ui/src/styles/tokens.css` (brand + status + radius + display font); surfaces / text /
-spacing are step 2 (they're HSL/theme-based in the design system's `globals.css`).
+second standard. StructureView stays blue/cyan-forward. **Steps 1–2 are wired** in
+`ui/src/styles/tokens.css`: step 1 = brand + status + radius + display font; step 2 =
+surfaces / text / border mapped onto the design system's dark-theme HSL tokens
+(`hsl(var(--background))` etc., with intermediate surface levels derived to preserve
+flowtrain's depth). Spacing stays on flowtrain — no clean DS equivalent yet.
 
 `@trainyard/ui` (S32-derived) uses shadcn-style semantic tokens. Mapping for the variables
 this app actually uses:

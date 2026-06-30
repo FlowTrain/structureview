@@ -5,6 +5,8 @@ only the shell differs). Drop scraps/links under each heading; we stitch them in
 specs (Job Story → BDD → EARS → spec) later. Both lean on the existing
 `@trainyard/timc-light` engine and the rubric in `docs/timc-light-evaluation-criteria.md`.
 
+Promoted spec: [`S73-structureview-spec-authoring-and-quality-antagonist.md`](./S73-structureview-spec-authoring-and-quality-antagonist.md).
+
 ---
 
 ## 1. In-tool spec authoring — WYSIWYG Markdown + ADF editor
