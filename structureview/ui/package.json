@@ -10,6 +10,10 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@tiptap/pm": "^2.6.6",
+    "@tiptap/react": "^2.6.6",
+    "@tiptap/starter-kit": "^2.6.6",
+    "tiptap-markdown": "^0.8.10",
     "highlight.js": "^11.9.0",
     "lucide-react": "^0.564.0",
     "marked": "^11.0.0",

@@ -299,6 +299,7 @@ export function StructureView() {
               { id: 'ears', label: 'EARS Analysis', icon: 'signal' },
               { id: 'sections', label: 'Sections', icon: 'book' },
               { id: 'bdd', label: 'BDD Generator', icon: 'search' },
+              { id: 'author', label: 'Spec Author', icon: 'edit', href: '/author' },
             ]
           },
         ]}
