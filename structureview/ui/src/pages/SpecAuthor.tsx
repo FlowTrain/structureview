@@ -9,7 +9,7 @@
 // editor.storage.markdown.getMarkdown() feeds analyse() cleanly. ADF round-trip, Confluence
 // sync, and template enforcement are deliberately out of scope here (later PRs).
 
-import { useMemo, useState } from 'react'
+import { useDeferredValue, useEffect, useMemo, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useEditor, EditorContent } from '@tiptap/react'
 import StarterKit from '@tiptap/starter-kit'
@@ -92,29 +92,61 @@ function Bar({ label, score }: { label: string; score: number }) {
 // that. Bump the key suffix if the template/format changes incompatibly.
 const STORAGE_KEY = 'specAuthor.draft.v1'
 
-export function SpecAuthor() {
-  const initial =
-    (typeof localStorage !== 'undefined' && localStorage.getItem(STORAGE_KEY)) || CCQG_TEMPLATE
-  const [md, setMd] = useState(initial)
-  const [savedAt, setSavedAt] = useState<string | null>(null)
+// Guarded read: localStorage access can throw in private/sandboxed contexts, so a blocked
+// store must not crash the route on mount — fall back to the template.
+function loadInitialDraft(): string {
+  try {
+    if (typeof localStorage !== 'undefined') {
+      const saved = localStorage.getItem(STORAGE_KEY)
+      if (saved) return saved
+    }
+  } catch {
+    // storage unavailable — fall through to the template
+  }
+  return CCQG_TEMPLATE
+}
 
+export function SpecAuthor() {
+  const [md, setMd] = useState(loadInitialDraft)
+  const [savedAt, setSavedAt] = useState<string | null>(null)
+  // Captured once so TipTap's initial content matches the restored draft (single read).
+  const initialContent = useRef(md).current
+  const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  // Debounced autosave: write to localStorage at most every 500ms instead of every keystroke,
+  // keeping typing responsive on longer specs.
   const persist = (next: string) => {
     setMd(next)
-    try {
-      localStorage.setItem(STORAGE_KEY, next)
-      setSavedAt(new Date().toLocaleTimeString())
-    } catch {
-      // localStorage unavailable (e.g. private mode) — editing still works, just no autosave.
-    }
+    if (saveTimer.current) clearTimeout(saveTimer.current)
+    saveTimer.current = setTimeout(() => {
+      try {
+        localStorage.setItem(STORAGE_KEY, next)
+        setSavedAt(new Date().toLocaleTimeString())
+      } catch {
+        // localStorage unavailable (e.g. private mode) — editing still works, just no autosave.
+      }
+    }, 500)
   }
+
+  useEffect(
+    () => () => {
+      if (saveTimer.current) clearTimeout(saveTimer.current)
+    },
+    []
+  )
 
   const editor = useEditor({
     extensions: [StarterKit, Markdown.configure({ html: false, breaks: false })],
-    content: initial,
+    content: initialContent,
     onUpdate: ({ editor }) => persist(editor.storage.markdown.getMarkdown()),
   })
 
-  const result = useMemo(() => (md.trim() ? analyse(md, 'markdown') : null), [md])
+  // Defer scoring off the latest keystroke so analyse() can't block typing on long specs.
+  const deferredMd = useDeferredValue(md)
+  const result = useMemo(
+    () => (deferredMd.trim() ? analyse(deferredMd, 'markdown') : null),
+    [deferredMd]
+  )
   const composite = result ? Math.round(result.aggregateScore) : 0
   const byType = (t: string) => result?.signals.find((s: any) => s.type === t)
   const ears = byType('ears-coverage')
@@ -143,7 +175,9 @@ export function SpecAuthor() {
     document.body.appendChild(a)
     a.click()
     a.remove()
-    URL.revokeObjectURL(url)
+    // Revoke on the next tick — revoking synchronously can cancel the download in some
+    // browsers/WebViews before it has started.
+    setTimeout(() => URL.revokeObjectURL(url), 0)
   }
 
   const btnStyle = {

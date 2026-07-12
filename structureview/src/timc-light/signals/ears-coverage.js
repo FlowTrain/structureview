@@ -20,6 +20,22 @@ const PATTERN_LABEL = {
 // Vague language that makes an otherwise-matched requirement ambiguous (→ warn).
 const VAGUE = /\b(?:relevant|appropriate|appropriately|as needed|as required|etc|reasonable|user-friendly|robust|efficient|efficiently|gracefully|properly|adequate|adequately|several|some|many)\b/i;
 
+// Sections that do NOT hold functional requirements. Bullets under these headings must never
+// be scored as EARS requirements — otherwise a MORE complete spec (with NFRs, tests, acceptance
+// criteria, dependencies) scores LOWER, which is backwards. `non-functional` guards the NFR
+// subsection; `functional requirements` / `ears` headings are the ones we DO scan.
+const EXCLUDED_HEADING =
+  /\b(?:scope|objective|bdd|gherkin|scenario|scenarios|example\s*map|test\s*strategy|test\s*plan|testing|pr\s*breakdown|pull\s*request|dependenc\w*|acceptance\s*criteria|decision\s*log|delivery\s*surface|integration|formatting|non-?functional)\b/i;
+
+// Example-Map labels ("Happy path:", "Edge case:", "Failure case:", "Rule:") are prose, not
+// requirements, even though they carry trigger words like "when"/"if".
+const NONREQ_LABEL = /^(?:happy\s*path|edge\s*case|failure\s*case|rule)\b/i;
+
+function headingLevel(trimmedLine) {
+  const m = /^(#{1,6})\s/.exec(trimmedLine);
+  return m ? m[1].length : 0;
+}
+
 function stripListMarker(line) {
   return line.replace(/^\s*(?:[-*]|\d+[.)]) */, '');
 }
@@ -96,9 +112,33 @@ export function scoreEarsCoverage(markdown) {
   let total = 0;
   let covered = 0;
 
+  let inFence = false;
+  const stack = []; // heading nesting: { level, excluded }
+
   for (let i = 0; i < lines.length; i++) {
     const trimmed = lines[i].trim();
+
+    // Never scan inside fenced code blocks (gherkin, bash, commit messages, etc.).
+    if (/^```/.test(trimmed)) {
+      inFence = !inFence;
+      continue;
+    }
+    if (inFence) continue;
+
+    // Track heading nesting so we can exclude whole non-requirement sections (incl. the
+    // NFR subsection nested under Technical Design).
+    const level = headingLevel(trimmed);
+    if (level > 0) {
+      while (stack.length && stack[stack.length - 1].level >= level) stack.pop();
+      stack.push({ level, excluded: EXCLUDED_HEADING.test(trimmed) });
+      continue;
+    }
+
     if (!isListItem(trimmed) || !isRequirement(trimmed)) continue;
+    if (stack.some((f) => f.excluded)) continue; // inside an excluded section
+    if (/^[-*]\s*\[[ xX]\]/.test(trimmed)) continue; // acceptance-criteria checkbox
+    if (NONREQ_LABEL.test(normalize(trimmed))) continue; // example-map label
+
     total++;
     requirements.push(requirementDetail(trimmed, i + 1));
     if (classifyRequirement(trimmed) !== null) {

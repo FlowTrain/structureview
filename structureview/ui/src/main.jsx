@@ -9,6 +9,10 @@ import { Login } from './pages/Login';
 const SpecAuthor = lazy(() =>
   import('./pages/SpecAuthor').then((m) => ({ default: m.SpecAuthor }))
 );
+// Lazy too — the Antagonist is its own surface and pulls in the generator wiring.
+const Antagonist = lazy(() =>
+  import('./pages/Antagonist').then((m) => ({ default: m.Antagonist }))
+);
 import './styles/flowtrain.css';
 import './styles/tokens.css'; // @trainyard/ui token bridge — must load after flowtrain.css
 
@@ -31,6 +35,20 @@ createRoot(document.getElementById('root')).render(
               }
             >
               <SpecAuthor />
+            </Suspense>
+          }
+        />
+        <Route
+          path="/antagonist"
+          element={
+            <Suspense
+              fallback={
+                <div style={{ padding: 32, color: 'var(--txm)', fontFamily: 'var(--ff-display)' }}>
+                  Loading antagonist…
+                </div>
+              }
+            >
+              <Antagonist />
             </Suspense>
           }
         />

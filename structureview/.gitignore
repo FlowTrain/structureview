@@ -1,0 +1,22 @@
+# Dependencies
+node_modules/
+ui/node_modules/
+
+# Build artifacts
+dist/
+out/
+src/renderer-dist/
+ui/dist/
+
+# Test output
+coverage/
+
+# Logs & OS noise
+*.log
+npm-debug.log*
+.DS_Store
+Thumbs.db
+
+# Env
+.env
+.env.*

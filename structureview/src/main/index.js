@@ -5,6 +5,7 @@ const path = require('path');
 const fs = require('fs');
 const chokidar = require('chokidar');
 const { setupDesktopAuth } = require('./setup-auth');
+const antagonist = require('./antagonist');
 
 // Optional native module — desktop builds ship with it; CI may not.
 let _keytar = null;
@@ -218,6 +219,14 @@ ipcMain.handle('open-external', (_e, url) => {
 });
 
 ipcMain.handle('get-app-version', () => app.getVersion());
+
+// Antagonist spike — generator model call runs in main (creds out of renderer, no CORS).
+ipcMain.handle('antagonist:generate', (_e, opts) => antagonist.generate(opts));
+ipcMain.handle('antagonist:defaults', () => ({
+  endpoint: antagonist.DEFAULT_ENDPOINT,
+  model: antagonist.DEFAULT_MODEL,
+}));
+ipcMain.handle('antagonist:governance', (_e, paths) => antagonist.loadGovernance(paths));
 
 // Handle file passed as CLI argument (e.g. double-clicked from OS)
 app.on('open-file', (event, filePath) => {

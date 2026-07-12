@@ -30,6 +30,14 @@ contextBridge.exposeInMainWorld('structview', {
     refreshEntitlement: () => ipcRenderer.invoke('billing:refresh-entitlement'),
   },
 
+  // Antagonist spike — generator model call (runs in main; S73 Phase A/B will replace the
+  // single-endpoint shim with the ai.providers/ai.models registry + PTY terminals).
+  antagonist: {
+    generate: (opts) => ipcRenderer.invoke('antagonist:generate', opts),
+    defaults: () => ipcRenderer.invoke('antagonist:defaults'),
+    governance: (paths) => ipcRenderer.invoke('antagonist:governance', paths),
+  },
+
   // Cleanup
   removeAllListeners: (channel) => ipcRenderer.removeAllListeners(channel),
 });
