@@ -13,18 +13,19 @@
     "@tiptap/pm": "^2.6.6",
     "@tiptap/react": "^2.6.6",
     "@tiptap/starter-kit": "^2.6.6",
-    "tiptap-markdown": "^0.8.10",
+    "clsx": "^2.1.1",
     "highlight.js": "^11.9.0",
     "lucide-react": "^0.564.0",
     "marked": "^11.0.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "react-router-dom": "^7.14.1",
-    "clsx": "^2.1.1",
-    "tailwind-merge": "^3.3.1"
+    "tailwind-merge": "^3.3.1",
+    "tiptap-markdown": "^0.8.10"
   },
   "devDependencies": {
     "@vitejs/plugin-react": "^4.3.4",
+    "electron-builder": "^26.15.3",
     "vite": "^5.4.10"
   }
 }
