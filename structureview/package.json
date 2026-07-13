@@ -43,7 +43,8 @@
   "dependencies": {
     "chokidar": "^3.5.3",
     "highlight.js": "^11.9.0",
-    "marked": "^11.2.0"
+    "marked": "^11.2.0",
+    "ui": "^0.2.4"
   },
   "overrides": {
     "@istanbuljs/load-nyc-config": {

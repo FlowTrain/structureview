@@ -113,6 +113,31 @@ A and B are independent; A first only because it's smaller and ships value to th
 cohort. Both are session-sized for the spec-driven working setup (point a session at this
 doc the way C5 was built from its spec).
 
+## Field finding — cross-file search has no in-document highlight (owner, 2026-07-11)
+
+**Beauty:** open the spec folder (80+ specs), search a term (e.g. `compact`), and the sidebar
+surfaces every file that matches — "absent from S12, referenced in 9 other open specs." This
+cross-file reference discovery is product-distinctive (S69 flagged it as such) and genuinely
+useful for the discovery-bench / spec-web use case.
+
+**Curse:** a matched document opens without showing *where* the term is — no highlight, no bold,
+no scroll-to-match. The user knows the file matches; they then hunt for the hit by eye.
+
+**Scoped fix (small — the in-doc search already exists via Ctrl+F/`search.js`):** when a result
+is opened from a *cross-file* search, carry the query into the document view and auto-apply the
+existing in-doc highlight + scroll-to-first-match (and match-count is already computed). This is
+wiring two existing features together, not new search infrastructure. Fast-follow candidate,
+independent of Workstreams A/B.
+
+**Pattern note:** this is the reveal problem again — search *finds* the structure but doesn't
+*show* it. Same family as MockupCanvas's JSON reveal; worth naming when the case study is written.
+
+## Build status (2026-07-11)
+
+Nothing in this plan is implemented yet. All PRs (A1, B1, B2) are Propose-stage. The standalone
+`ai-maturity-learning-platform/demo/json-to-ui.html` demonstrates the JSON→UI *concept* with a
+deterministic renderer, but it is NOT the in-app MockupCanvas (PR B1/B2) — those remain unbuilt.
+
 ## Decision log (owner)
 
 1. **Numbering/governance:** S73 PR-family, or new segment? (This doc renames on decision.)
