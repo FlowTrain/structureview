@@ -4,7 +4,7 @@ Two toolchains are configured. **Option 1 (electron-builder) is the primary path
 
 ## Shared first steps (both options)
 
-Run from the repo app root (`structureview/structureview`), **not** `ui/`:
+Run from the Electron app root (the directory containing `package.json`), **not** `ui/`:
 
 ```bash
 npm install            # first time only
@@ -41,8 +41,8 @@ npm run pack                      # unpacked dir only (dist/win-unpacked)
 ## Option 2 — Electron Forge (Squirrel installer)
 
 ```bash
-npm run package    # unpacked app → out/structureview-win32-x64
-npm run make       # Squirrel installer → out/make/squirrel.windows/x64/
+npx electron-forge package    # unpacked app → out/structureview-win32-x64
+npx electron-forge make       # Squirrel installer → out/make/squirrel.windows/x64/
 ```
 
 Squirrel installs silently to `%LocalAppData%\structureview` (no install dialog) and is auto-update-friendly, but has no file-association or AppX config here.
@@ -50,7 +50,7 @@ Squirrel installs silently to `%LocalAppData%\structureview` (no install dialog)
 ## Gotchas (learned the hard way)
 
 - **Unsigned builds trip SmartScreen.** NSIS/Squirrel exes will warn on client machines. AppX or an IT-pushed zip of `dist/win-unpacked` avoids it. Code signing is the real fix.
-- **Kill running copies before testing an install.** All builds share `%AppData%\structureview`; a running old instance locks the cache (`Unable to move the cache: Access is denied`). `taskkill //F //IM StructureView.exe`.
+- **Kill running copies before testing an install.** All builds share `%AppData%\structureview`; a running old instance locks the cache (`Unable to move the cache: Access is denied`). `taskkill /F /IM StructureView.exe`.
 - **Multiple installs coexist.** Squirrel (`%LocalAppData%`), NSIS (Program Files), and older "StructView"-named installs all register shortcuts. When the app "looks old", check which exe the shortcut points at — or launch `dist/win-unpacked/StructureView.exe` directly to see the freshest build.
 - **Bump `version` in package.json every build.** Multiple builds all claiming 0.1.0 are indistinguishable.
 - **`appx.assets` is not a valid electron-builder option** (removed 2026-07-12). AppX assets are picked up from `build/appx/` by directory convention.
