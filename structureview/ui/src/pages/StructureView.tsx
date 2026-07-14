@@ -7,7 +7,6 @@ import { Sidebar } from '../components/layout/Sidebar'
 import { Topbar } from '../components/layout/Topbar'
 import { analyse } from '@timc/engine.js'
 import { generateBdd } from '@timc/bdd-generator.js'
-import { SAMPLES } from '../timc-samples.js'
 
 // Score helpers driven by the real TIMC Light engine output.
 function statusFor(score: number): 'pass' | 'warn' | 'fail' {
@@ -56,6 +55,9 @@ function makeDoc(opts: { id: string; name: string; icon: string; content: string
   }
 }
 
+// A fully-analysed document record — the live shape the whole page renders from.
+type Doc = ReturnType<typeof makeDoc>
+
 // Spec-driven development help. Documents in the wild vary wildly, so the panel always
 // offers a way to learn the notation and grab the spec template.
 const SPEC_ARTICLE_URL =
@@ -86,22 +88,11 @@ async function downloadSpecInstructions() {
   }
 }
 
-// Bundled sample documents — shown on launch so the panel is populated before the user
-// opens anything. Each is analysed live by the engine (no hardcoded scores).
-const SAMPLE_DOCS = [
-  { id: 'prd', name: 'PRD-2024-v2.4.md', icon: '📋', size: '2.1 KB' },
-  { id: 'arch', name: 'ARCH-SYS-001.md', icon: '🏗', size: '1.4 KB' },
-  { id: 'security', name: 'SECURITY-SPEC.md', icon: '🔒', size: '0.9 KB' },
-  { id: 'testplan', name: 'TEST-PLAN-Q4.md', icon: '✅', size: '3.2 KB' },
-  { id: 'api', name: 'API-GATEWAY.json', icon: '⚡', size: '1.8 KB' },
-].map((d) => {
-  const sample = SAMPLES[d.id as keyof typeof SAMPLES]
-  return makeDoc({ id: d.id, name: d.name, icon: d.icon, content: sample.content, hint: sample.hint, size: d.size })
-})
-
 export function StructureView() {
-  const [docs, setDocs] = useState(SAMPLE_DOCS)
-  const [activeId, setActiveId] = useState(SAMPLE_DOCS[0].id)
+  // Start empty — the panel populates only from files the user actually opens (no bundled
+  // sample docs). See docs/BUILD-BACKLOG.md: mock/sample data purged (S69 disposition).
+  const [docs, setDocs] = useState<Doc[]>([])
+  const [activeId, setActiveId] = useState('')
   const [query, setQuery] = useState('')
   const [mode, setMode] = useState<'overview' | 'document' | 'ears' | 'sections' | 'bdd'>('overview')
   const [collapsed, setCollapsed] = useState(false)
@@ -187,6 +178,25 @@ export function StructureView() {
       return `<pre>${escapeHtml(content)}</pre>`
     }
   }, [activeDoc])
+
+  // Corpus stats — derived live from the open documents (no hardcoded numbers). File count is
+  // the number of open docs; total requirements sums each doc's EARS requirement lines; the
+  // PASS/WARN/FAIL buckets count docs by composite score (>80 / 60–80 / <60) via the same engine
+  // output the rest of the page renders from.
+  const corpus = useMemo(() => {
+    let requirements = 0
+    let pass = 0
+    let warn = 0
+    let fail = 0
+    for (const d of docs) {
+      const ears = d.result.signals.find((s: any) => s.type === 'ears-coverage')
+      requirements += ears?.requirements?.length ?? 0
+      if (d.score > 80) pass++
+      else if (d.score >= 60) warn++
+      else fail++
+    }
+    return { files: docs.length, requirements, pass, warn, fail }
+  }, [docs])
 
   // Empty state — guard before any activeDoc-dependent computation (e.g. all files removed).
   if (docs.length === 0) {
@@ -439,27 +449,27 @@ export function StructureView() {
 
                 <div className="divider"></div>
 
-                {/* Corpus stats */}
+                {/* Corpus stats — derived live from open docs (no hardcoded numbers) */}
                 <div className="card-sm" style={{background:'var(--sf2)',borderRadius:'var(--r-md)',marginTop:'var(--s2)'}}>
                   <div className="flex-between mb-3">
                     <span className="t-xs text-muted fw-600" style={{textTransform:'uppercase',letterSpacing:'.06em'}}>Corpus</span>
-                    <span className="t-xs text-faint">5 files</span>
+                    <span className="t-xs text-faint">{corpus.files} file{corpus.files === 1 ? '' : 's'}</span>
                   </div>
                   <div className="timc-row">
                     <div className="timc-lbl">Total requirements</div>
-                    <div className="timc-val">184</div>
+                    <div className="timc-val">{corpus.requirements}</div>
                   </div>
                   <div className="timc-row">
                     <div className="timc-lbl">PASS ({'>'}80)</div>
-                    <div className="timc-val text-ok">3</div>
+                    <div className="timc-val text-ok">{corpus.pass}</div>
                   </div>
                   <div className="timc-row">
                     <div className="timc-lbl">WARN (60–80)</div>
-                    <div className="timc-val text-warn">1</div>
+                    <div className="timc-val text-warn">{corpus.warn}</div>
                   </div>
                   <div className="timc-row">
                     <div className="timc-lbl">FAIL ({'<'}60)</div>
-                    <div className="timc-val text-err">1</div>
+                    <div className="timc-val text-err">{corpus.fail}</div>
                   </div>
                 </div>
 
