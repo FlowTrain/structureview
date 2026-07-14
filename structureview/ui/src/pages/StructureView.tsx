@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo, useRef } from 'react'
 import { marked } from 'marked'
 import hljs from 'highlight.js/lib/common'
 import 'highlight.js/styles/github-dark.css'
@@ -97,7 +97,22 @@ export function StructureView() {
   const [mode, setMode] = useState<'overview' | 'document' | 'ears' | 'sections' | 'bdd'>('overview')
   const [collapsed, setCollapsed] = useState(false)
   const [genFor, setGenFor] = useState<{ id: string; gherkin: string; stories: number; acs: number } | null>(null)
+  // The search term carried into the document reader when a doc is opened from a cross-file
+  // search — drives the in-doc highlight + scroll-to-first-match (Activity 3b).
+  const [carriedQuery, setCarriedQuery] = useState('')
+  const readerRef = useRef<HTMLDivElement>(null)
   const activeDoc = docs.find((d) => d.id === activeId) ?? docs[0]
+
+  // Open a doc from the file list. When a cross-file search is active, carry the query into the
+  // document view so the reader highlights the term and scrolls to the first hit — the piece the
+  // cross-file search was missing (it found *which* file matched, not *where*).
+  function openDoc(id: string, searchTerm?: string) {
+    setActiveId(id)
+    if (searchTerm && searchTerm.trim()) {
+      setCarriedQuery(searchTerm.trim())
+      setMode('document')
+    }
+  }
 
   function removeDoc(id: string) {
     setDocs((prev) => prev.filter((d) => d.id !== id))
@@ -197,6 +212,50 @@ export function StructureView() {
     }
     return { files: docs.length, requirements, pass, warn, fail }
   }, [docs])
+
+  // In-doc highlight — reproduces the vanilla search.js highlight + scroll-to-first-match in the
+  // React reader. Runs after the doc HTML is committed: strips any prior <mark>s, then wraps every
+  // case-insensitive occurrence of the carried query in <mark class="doc-hl"> and scrolls the first
+  // into view. Walks text nodes (never innerHTML string surgery), so the rendered markup is safe.
+  useEffect(() => {
+    const root = readerRef.current
+    if (!root) return
+    root.querySelectorAll('mark.doc-hl').forEach((m) => {
+      const parent = m.parentNode
+      if (!parent) return
+      parent.replaceChild(document.createTextNode(m.textContent || ''), m)
+      parent.normalize()
+    })
+    const term = carriedQuery.trim()
+    if (!term || mode !== 'document') return
+    const lc = term.toLowerCase()
+    const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT)
+    const textNodes: Text[] = []
+    let n = walker.nextNode()
+    while (n) { textNodes.push(n as Text); n = walker.nextNode() }
+    let first: HTMLElement | null = null
+    for (const textNode of textNodes) {
+      const text = textNode.nodeValue || ''
+      const lower = text.toLowerCase()
+      if (!lower.includes(lc)) continue
+      const frag = document.createDocumentFragment()
+      let i = 0
+      let idx = lower.indexOf(lc)
+      while (idx !== -1) {
+        if (idx > i) frag.appendChild(document.createTextNode(text.slice(i, idx)))
+        const mark = document.createElement('mark')
+        mark.className = 'doc-hl'
+        mark.textContent = text.slice(idx, idx + term.length)
+        frag.appendChild(mark)
+        if (!first) first = mark
+        i = idx + term.length
+        idx = lower.indexOf(lc, i)
+      }
+      if (i < text.length) frag.appendChild(document.createTextNode(text.slice(i)))
+      textNode.parentNode?.replaceChild(frag, textNode)
+    }
+    if (first) first.scrollIntoView({ block: 'center', behavior: 'smooth' })
+  }, [renderedDoc, carriedQuery, mode, activeId])
 
   // Empty state — guard before any activeDoc-dependent computation (e.g. all files removed).
   if (docs.length === 0) {
@@ -419,7 +478,7 @@ export function StructureView() {
                   <div
                     key={doc.id}
                     className={`doc-item ${activeDoc.id === doc.id ? 'active' : ''}`}
-                    onClick={() => setActiveId(doc.id)}
+                    onClick={() => openDoc(doc.id, q ? query : undefined)}
                     tabIndex={0}
                   >
                     <span className="doc-icon">{doc.icon}</span>
@@ -521,17 +580,35 @@ export function StructureView() {
                   </div>
                 </div>
               ) : mode === 'document' ? (
-                <div
-                  className="sv-panel-body doc-reader"
-                  onClick={(e) => {
-                    const a = (e.target as HTMLElement).closest('a')
-                    if (a && a.getAttribute('href')) {
-                      e.preventDefault()
-                      ;(window as any).structview?.openExternal?.(a.getAttribute('href'))
-                    }
-                  }}
-                  dangerouslySetInnerHTML={{ __html: renderedDoc }}
-                />
+                <>
+                  {carriedQuery && (
+                    <div className="doc-hl-bar flex items-center gap-2" style={{padding:'var(--s2) var(--s4)',borderBottom:'1px solid var(--bd)',background:'var(--sf2)'}}>
+                      <span className="t-xs text-muted">
+                        Highlighting “{carriedQuery}” · {countMatches(activeDoc.content, carriedQuery.toLowerCase())} match{countMatches(activeDoc.content, carriedQuery.toLowerCase()) === 1 ? '' : 'es'} in {activeDoc.name}
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => setCarriedQuery('')}
+                        className="t-xs"
+                        style={{marginLeft:'auto',background:'none',border:'none',color:'var(--ft-blue)',cursor:'pointer',padding:0}}
+                      >
+                        Clear
+                      </button>
+                    </div>
+                  )}
+                  <div
+                    ref={readerRef}
+                    className="sv-panel-body doc-reader"
+                    onClick={(e) => {
+                      const a = (e.target as HTMLElement).closest('a')
+                      if (a && a.getAttribute('href')) {
+                        e.preventDefault()
+                        ;(window as any).structview?.openExternal?.(a.getAttribute('href'))
+                      }
+                    }}
+                    dangerouslySetInnerHTML={{ __html: renderedDoc }}
+                  />
+                </>
               ) : (
                 <div className="sv-panel-body">
                   {/* EARS analysis — per requirement */}
