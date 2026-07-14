@@ -13,6 +13,11 @@ const SpecAuthor = lazy(() =>
 const Antagonist = lazy(() =>
   import('./pages/Antagonist').then((m) => ({ default: m.Antagonist }))
 );
+// Lazy — the Mockup Canvas (JSON→UI spike, B1) is its own surface; kept out of the main
+// StructureView bundle until the /mockup route is opened.
+const MockupCanvas = lazy(() =>
+  import('./pages/MockupCanvas').then((m) => ({ default: m.MockupCanvas }))
+);
 import './styles/flowtrain.css';
 import './styles/tokens.css'; // @trainyard/ui token bridge — must load after flowtrain.css
 
@@ -49,6 +54,20 @@ createRoot(document.getElementById('root')).render(
               }
             >
               <Antagonist />
+            </Suspense>
+          }
+        />
+        <Route
+          path="/mockup"
+          element={
+            <Suspense
+              fallback={
+                <div style={{ padding: 32, color: 'var(--txm)', fontFamily: 'var(--ff-display)' }}>
+                  Loading canvas…
+                </div>
+              }
+            >
+              <MockupCanvas />
             </Suspense>
           }
         />
