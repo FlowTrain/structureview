@@ -154,16 +154,16 @@ The antagonist must emit audit events for user-visible generation, critique, reg
 
 ### 3.8 File Manifest
 
-| File | Type | Description |
-|---|---|---|
-| `docs/S73-structureview-spec-authoring-and-quality-antagonist.md` | new | Governed backlog spec for the StructureView authoring and antagonist capabilities. |
-| `docs/research-future-capabilities.md` | existing | Research scratchpad and source collection preserved as input material. |
-| `ui/src/pages/StructureView.tsx` | future modified | Shared route that hosts authoring, scoring, and antagonist workspaces. |
-| `src/timc-light/index.js` | existing | Shared TIMC Light API consumed for live scoring. |
-| `src/main/preload.js` | future modified | Electron bridge for local file and PTY capabilities. |
-| `src/main/index.js` | future modified | Electron main-process owner for safe shell process spawning. |
-| `src/auth/backend-client.js` | future modified | Authenticated bridge for provider, sync, and web shell services. |
-| `ui/src/styles/tokens.css` | future modified | Token consumption updates if new shared UI primitives need StructureView-specific mappings. |
+| File                                                              | Type            | Description                                                                                 |
+| ----------------------------------------------------------------- | --------------- | ------------------------------------------------------------------------------------------- |
+| `docs/S73-structureview-spec-authoring-and-quality-antagonist.md` | new             | Governed backlog spec for the StructureView authoring and antagonist capabilities.          |
+| `docs/research-future-capabilities.md`                            | existing        | Research scratchpad and source collection preserved as input material.                      |
+| `ui/src/pages/StructureView.tsx`                                  | future modified | Shared route that hosts authoring, scoring, and antagonist workspaces.                      |
+| `src/timc-light/index.js`                                         | existing        | Shared TIMC Light API consumed for live scoring.                                            |
+| `src/main/preload.js`                                             | future modified | Electron bridge for local file and PTY capabilities.                                        |
+| `src/main/index.js`                                               | future modified | Electron main-process owner for safe shell process spawning.                                |
+| `src/auth/backend-client.js`                                      | future modified | Authenticated bridge for provider, sync, and web shell services.                            |
+| `ui/src/styles/tokens.css`                                        | future modified | Token consumption updates if new shared UI primitives need StructureView-specific mappings. |
 
 ### 3.9 Functional Requirements
 
@@ -185,12 +185,12 @@ The antagonist must emit audit events for user-visible generation, critique, reg
 
 ### 3.10 Non-Functional Requirements
 
-| Dimension | Requirement |
-|---|---|
-| Performance | The authoring surface must recompute TIMC Light results within 250 ms for Markdown documents up to 100 KB on a typical development workstation, using debouncing where needed. |
-| Security | Renderer code must not access provider secrets, spawn local processes, or write arbitrary files directly; Electron and web shells own those boundaries. |
-| Observability | The implementation must emit structured events for editor save/export, TIMC score recomputation, provider session start/failure, critic verdict, and artifact acceptance. |
-| Reliability | If ADF conversion, provider calls, or PTY startup fails, the current Markdown artifact must remain recoverable in the editor. |
+| Dimension       | Requirement                                                                                                                                                                                                                                         |
+| --------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Performance     | The authoring surface must recompute TIMC Light results within 250 ms for Markdown documents up to 100 KB on a typical development workstation, using debouncing where needed.                                                                      |
+| Security        | Renderer code must not access provider secrets, spawn local processes, or write arbitrary files directly; Electron and web shells own those boundaries.                                                                                             |
+| Observability   | The implementation must emit structured events for editor save/export, TIMC score recomputation, provider session start/failure, critic verdict, and artifact acceptance.                                                                           |
+| Reliability     | If ADF conversion, provider calls, or PTY startup fails, the current Markdown artifact must remain recoverable in the editor.                                                                                                                       |
 | Tuneable values | TIMC status thresholds must continue to come from the TIMC Light criteria and future threshold configuration; provider timeouts, debounce windows, and terminal limits must be configurable through the S72 settings surface rather than hardcoded. |
 
 ---
@@ -200,21 +200,25 @@ The antagonist must emit audit events for user-visible generation, critique, reg
 ### 4.1 Example Map
 
 **Rule:** Spec authoring preserves governance structure while users edit visually.
+
 - Happy path: A user creates a new spec from the CCQG template and all ten required sections appear.
 - Edge case: A user deletes a required section and TIMC Light immediately reports section incompleteness.
 - Failure case: A Markdown-to-ADF conversion drops a Gherkin block and the editor blocks sync until the user reviews the loss.
 
 **Rule:** Live scoring uses the same TIMC Light engine across shells.
+
 - Happy path: A Markdown spec edited in Electron and web receives the same EARS, section, BDD, and composite scores.
 - Edge case: A 100 KB spec updates scores after debounced edits without blocking text entry.
 - Failure case: A malformed Gherkin scenario appears in the BDD findings panel before export.
 
 **Rule:** The antagonist separates generation from critique.
+
 - Happy path: The generator creates a spec draft and the critic evaluates it with TIMC Light plus quality-gate rubric notes.
 - Edge case: The generator is local and the critic is hosted, but the artifact handoff remains provider-neutral.
 - Failure case: The critic provider fails and the generator artifact remains available for manual review.
 
 **Rule:** Shell-specific terminal execution stays outside shared renderer code.
+
 - Happy path: Electron starts local PTYs from the main process and streams output into the renderer terminal.
 - Edge case: Web starts server-side PTYs over WebSocket while reusing the same terminal component.
 - Failure case: A renderer-only attempt to spawn a shell process is rejected by the shell boundary.
@@ -378,27 +382,27 @@ test(S73): cover antagonist audit events and transcript states
 
 ### 7.1 Hard Dependencies
 
-| Segment | Consumed output | Reason |
-|---|---|---|
-| S35 | TIMC Light scoring engine and BDD generator foundation | Both capabilities use the same local scoring rubric as the current StructureView quality panel. |
-| S69 | Design system extraction and StructureView disposition guidance | New UI must consume `@trainyard/ui` patterns instead of growing a forked StructureView component set. |
-| S72 | Platform settings control plane | Provider endpoints, local/cloud mode, terminal limits, and sync settings need a governed configuration surface. |
+| Segment | Consumed output                                                 | Reason                                                                                                          |
+| ------- | --------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------- |
+| S35     | TIMC Light scoring engine and BDD generator foundation          | Both capabilities use the same local scoring rubric as the current StructureView quality panel.                 |
+| S69     | Design system extraction and StructureView disposition guidance | New UI must consume `@trainyard/ui` patterns instead of growing a forked StructureView component set.           |
+| S72     | Platform settings control plane                                 | Provider endpoints, local/cloud mode, terminal limits, and sync settings need a governed configuration surface. |
 
 ### 7.2 Soft Dependencies
 
-| Segment | Helpful output | Reason |
-|---|---|---|
-| S46 | Roundhouse shell unification | Helps keep the web surface aligned with the broader Train Yard shell. |
-| S53 | Jira Forge App - Atlassian Marketplace | May provide future Atlassian auth and sync patterns. |
-| S68 | Governance Artifact Version Registry | Can record authored spec and generated artifact versions once the workflow matures. |
+| Segment | Helpful output                         | Reason                                                                              |
+| ------- | -------------------------------------- | ----------------------------------------------------------------------------------- |
+| S46     | Roundhouse shell unification           | Helps keep the web surface aligned with the broader Train Yard shell.               |
+| S53     | Jira Forge App - Atlassian Marketplace | May provide future Atlassian auth and sync patterns.                                |
+| S68     | Governance Artifact Version Registry   | Can record authored spec and generated artifact versions once the workflow matures. |
 
 ### 7.3 What Downstream Segments Depend On
 
-| Segment | Consumes | Contract or surface |
-|---|---|---|
-| Future Atlassian sync segment | Markdown/ADF adapter behavior | Import/export contract for repository Markdown and ADF documents. |
-| Future LemonAid integration segment | Provider role abstraction and antagonist handoff | Generator/critic provider contract and typed artifact handoff. |
-| Future retention/governance segment | Antagonist audit events | Audit event schema for generated, critiqued, accepted, exported, and retained artifacts. |
+| Segment                             | Consumes                                         | Contract or surface                                                                      |
+| ----------------------------------- | ------------------------------------------------ | ---------------------------------------------------------------------------------------- |
+| Future Atlassian sync segment       | Markdown/ADF adapter behavior                    | Import/export contract for repository Markdown and ADF documents.                        |
+| Future LemonAid integration segment | Provider role abstraction and antagonist handoff | Generator/critic provider contract and typed artifact handoff.                           |
+| Future retention/governance segment | Antagonist audit events                          | Audit event schema for generated, critiqued, accepted, exported, and retained artifacts. |
 
 ---
 
@@ -417,13 +421,13 @@ test(S73): cover antagonist audit events and transcript states
 
 ## 9. Decision Log
 
-| Decision | Options Considered | Rationale | Date |
-|---|---|---|---|
-| Keep the two backlog capabilities in one umbrella spec for review | One spec vs two immediate specs | The capabilities share StructureView, TIMC Light, provider configuration, and shell-boundary decisions; implementation PRs keep the work separable. | June 2026 |
-| Classify the spec as stream-aligned | stream-aligned vs platform vs enabling | The eventual value is directly reachable on `/structureview`; supporting adapters are implementation details behind that user-visible surface. | June 2026 |
-| Keep editor engine selection open until implementation spike | TipTap vs `@atlaskit/editor-core` vs raw ProseMirror | ADF fidelity and bundle weight need empirical validation before locking the editor dependency. | June 2026 |
-| Preserve Markdown as the repository source format | Markdown source vs ADF source vs Confluence storage source | Repository specs remain the governed review artifact while ADF supports Atlassian sync. | June 2026 |
-| Require typed artifact handoff between generator and critic | Typed handoff vs terminal transcript scraping | Typed handoff keeps critique testable and prevents provider-specific terminal output from becoming the integration contract. | June 2026 |
+| Decision                                                          | Options Considered                                         | Rationale                                                                                                                                           | Date      |
+| ----------------------------------------------------------------- | ---------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------- | --------- |
+| Keep the two backlog capabilities in one umbrella spec for review | One spec vs two immediate specs                            | The capabilities share StructureView, TIMC Light, provider configuration, and shell-boundary decisions; implementation PRs keep the work separable. | June 2026 |
+| Classify the spec as stream-aligned                               | stream-aligned vs platform vs enabling                     | The eventual value is directly reachable on `/structureview`; supporting adapters are implementation details behind that user-visible surface.      | June 2026 |
+| Keep editor engine selection open until implementation spike      | TipTap vs `@atlaskit/editor-core` vs raw ProseMirror       | ADF fidelity and bundle weight need empirical validation before locking the editor dependency.                                                      | June 2026 |
+| Preserve Markdown as the repository source format                 | Markdown source vs ADF source vs Confluence storage source | Repository specs remain the governed review artifact while ADF supports Atlassian sync.                                                             | June 2026 |
+| Require typed artifact handoff between generator and critic       | Typed handoff vs terminal transcript scraping              | Typed handoff keeps critique testable and prevents provider-specific terminal output from becoming the integration contract.                        | June 2026 |
 
 ---
 
@@ -434,14 +438,14 @@ test(S73): cover antagonist audit events and transcript states
 
 ### 10.1 Delivery Surface
 
-| Surface / Contract | Kind | Evidence of delivery |
-|---|---|---|
-| `/structureview` spec authoring workspace | screen | User can create/edit a CCQG spec and see TIMC Light scores update while typing. |
-| `/structureview` antagonist workspace | screen | User can run generator and critic sessions against one active artifact with visible quality verdicts. |
-| Markdown/ADF document adapter | contract | Round-trip tests preserve required sections, EARS bullets, and Gherkin blocks. |
-| Generator/critic provider roles | contract | Unit tests prove generator and critic can use different configured providers. |
-| Terminal shell adapter | contract | Electron tests prove PTY startup is main-process owned; web tests prove server PTY streaming is used. |
-| Antagonist audit event model | contract | Tests prove generation, critique, acceptance, export, and retention-state events are emitted. |
+| Surface / Contract                        | Kind     | Evidence of delivery                                                                                  |
+| ----------------------------------------- | -------- | ----------------------------------------------------------------------------------------------------- |
+| `/structureview` spec authoring workspace | screen   | User can create/edit a CCQG spec and see TIMC Light scores update while typing.                       |
+| `/structureview` antagonist workspace     | screen   | User can run generator and critic sessions against one active artifact with visible quality verdicts. |
+| Markdown/ADF document adapter             | contract | Round-trip tests preserve required sections, EARS bullets, and Gherkin blocks.                        |
+| Generator/critic provider roles           | contract | Unit tests prove generator and critic can use different configured providers.                         |
+| Terminal shell adapter                    | contract | Electron tests prove PTY startup is main-process owned; web tests prove server PTY streaming is used. |
+| Antagonist audit event model              | contract | Tests prove generation, critique, acceptance, export, and retention-state events are emitted.         |
 
 **Domain boundary:** Complete when implementation crosses from StructureView presentation into provider, terminal, sync, and governance contexts.
 
@@ -452,10 +456,10 @@ test(S73): cover antagonist audit events and transcript states
 
 ### 10.2 Integration Handoffs
 
-| Deferred surface | Owning segment | Tracked issue |
-|---|---|---|
-| Production Atlassian sync connector and OAuth provisioning | Future Atlassian sync segment | Pending issue |
-| FINRA 4511 retention storage for antagonist transcripts | Future governance/retention segment | Pending issue |
-| Hoisted `@trainyard/ui` terminal/editor primitive extraction | S69 follow-up | Pending issue |
+| Deferred surface                                             | Owning segment                      | Tracked issue |
+| ------------------------------------------------------------ | ----------------------------------- | ------------- |
+| Production Atlassian sync connector and OAuth provisioning   | Future Atlassian sync segment       | Pending issue |
+| FINRA 4511 retention storage for antagonist transcripts      | Future governance/retention segment | Pending issue |
+| Hoisted `@trainyard/ui` terminal/editor primitive extraction | S69 follow-up                       | Pending issue |
 
 Implementation approval must replace each pending issue placeholder with a tracked issue or split the deferred surface into a named segment before Status can move to `Approved`.

@@ -32,7 +32,7 @@ Every import is a **bundle**: an envelope wrapping one or more artifacts.
   "source_repos": ["repo@commit-sha"],
   "content_hash": "sha256 of canonicalized artifacts",
   "artifacts": [
-    { "kind": "findings", "media": "application/json", "body": { } },
+    { "kind": "findings", "media": "application/json", "body": {} },
     { "kind": "architecture", "media": "text/vnd.mermaid", "body": "graph TD..." },
     { "kind": "risk-map", "media": "text/markdown", "body": "..." }
   ],
@@ -41,7 +41,7 @@ Every import is a **bundle**: an envelope wrapping one or more artifacts.
 ```
 
 Notes: `producer.governance` pins the constitution the agent ran under (auditability of the
-*rules*, not just the output). `content_hash` + `produced_at` are the FINRA 4511 /
+_rules_, not just the output). `content_hash` + `produced_at` are the FINRA 4511 /
 WORM-adjacent anchors. The `architecture_mermaid` embed fix from the Auditor thread is
 subsumed: architecture is an artifact `kind`, not a bolt-on field.
 
@@ -68,7 +68,7 @@ the Evolution Library, same reason regulators like it.
 
 ### 2.5 HITL boundary
 
-Import is an ingest, not an endorsement. Bundles affect *provisional* scores immediately but
+Import is an ingest, not an endorsement. Bundles affect _provisional_ scores immediately but
 are flagged `unattested` until a human reviewer signs (name recorded). Release-readiness
 gates may be configured to require attested-only evidence (Tier 4 mode default: attested).
 
@@ -84,12 +84,12 @@ FINRA 4511 storage; this spec emits the records it needs).
 ## 4. PR breakdown (sized like the house pattern)
 
 1. **PR 1 — the schema:** `evidence-bundle.schema.json` + a validator CLI + three fixture
-   bundles (audit, dependency-map, invalid). No UI. *1 session.*
+   bundles (audit, dependency-map, invalid). No UI. _1 session._
 2. **PR 2 — Auditor emits the envelope:** consolidation prompt updated to wrap its outputs
-   as a bundle (subsumes the `architecture_mermaid` one-line fix). *small.*
+   as a bundle (subsumes the `architecture_mermaid` one-line fix). _small._
 3. **PR 3 — TIMC ingest:** import + quarantine + provisional scoring; attestation flag.
-   *1–2 sessions.*
-4. **PR 4 — decay + Tier 4 attested-only gate.** *1 session.*
+   _1–2 sessions._
+4. **PR 4 — decay + Tier 4 attested-only gate.** _1 session._
 
 ## 5. Decision log (owner)
 

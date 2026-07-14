@@ -24,11 +24,11 @@ npm run build:win
 
 Output in `dist/`:
 
-| File | What it is |
-|---|---|
+| File                                | What it is                                                                             |
+| ----------------------------------- | -------------------------------------------------------------------------------------- |
 | `StructureView Setup <version>.exe` | NSIS installer — user-choosable install dir, registers `.md`/`.json` file associations |
-| `StructureView <version>.appx` | MSIX package — Microsoft Store / enterprise (Intune) deployment |
-| `win-unpacked/` | Unpacked app — zip this for an IT-pushed, no-installer distribution |
+| `StructureView <version>.appx`      | MSIX package — Microsoft Store / enterprise (Intune) deployment                        |
+| `win-unpacked/`                     | Unpacked app — zip this for an IT-pushed, no-installer distribution                    |
 
 Variants:
 
