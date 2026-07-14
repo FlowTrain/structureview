@@ -311,7 +311,6 @@ export function StructureView() {
               { id: 'bdd', label: 'BDD Generator', icon: 'search' },
               { id: 'author', label: 'Spec Author', icon: 'edit', href: '/author' },
               { id: 'mockup', label: 'Mockup Canvas', icon: 'layout', href: '/mockup' },
-              { id: 'antagonist', label: 'Quality Antagonist', icon: 'chat', href: '/antagonist' },
             ]
           },
         ]}
