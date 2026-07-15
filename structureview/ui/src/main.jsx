@@ -9,9 +9,14 @@ import { Login } from './pages/Login';
 const SpecAuthor = lazy(() =>
   import('./pages/SpecAuthor').then((m) => ({ default: m.SpecAuthor }))
 );
-// Lazy too — the Antagonist is its own surface and pulls in the generator wiring.
-const Antagonist = lazy(() =>
-  import('./pages/Antagonist').then((m) => ({ default: m.Antagonist }))
+// The Antagonist (S73 spike) route/page is intentionally NOT shipped: the main-process bridge
+// was unwired 2026-07-11, so a routed page would call an IPC surface that no longer exists.
+// src/pages/Antagonist.tsx is retained on disk; re-add the lazy import + <Route> here when the
+// spike is re-wired (with its contract-test update + Decision Log entry).
+// Lazy — the Mockup Canvas (JSON→UI spike, B1) is its own surface; kept out of the main
+// StructureView bundle until the /mockup route is opened.
+const MockupCanvas = lazy(() =>
+  import('./pages/MockupCanvas').then((m) => ({ default: m.MockupCanvas }))
 );
 import './styles/flowtrain.css';
 import './styles/tokens.css'; // @trainyard/ui token bridge — must load after flowtrain.css
@@ -39,16 +44,16 @@ createRoot(document.getElementById('root')).render(
           }
         />
         <Route
-          path="/antagonist"
+          path="/mockup"
           element={
             <Suspense
               fallback={
                 <div style={{ padding: 32, color: 'var(--txm)', fontFamily: 'var(--ff-display)' }}>
-                  Loading antagonist…
+                  Loading canvas…
                 </div>
               }
             >
-              <Antagonist />
+              <MockupCanvas />
             </Suspense>
           }
         />

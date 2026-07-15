@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo, useRef } from 'react'
 import { marked } from 'marked'
 import hljs from 'highlight.js/lib/common'
 import 'highlight.js/styles/github-dark.css'
@@ -7,7 +7,6 @@ import { Sidebar } from '../components/layout/Sidebar'
 import { Topbar } from '../components/layout/Topbar'
 import { analyse } from '@timc/engine.js'
 import { generateBdd } from '@timc/bdd-generator.js'
-import { SAMPLES } from '../timc-samples.js'
 
 // Score helpers driven by the real TIMC Light engine output.
 function statusFor(score: number): 'pass' | 'warn' | 'fail' {
@@ -56,6 +55,9 @@ function makeDoc(opts: { id: string; name: string; icon: string; content: string
   }
 }
 
+// A fully-analysed document record — the live shape the whole page renders from.
+type Doc = ReturnType<typeof makeDoc>
+
 // Spec-driven development help. Documents in the wild vary wildly, so the panel always
 // offers a way to learn the notation and grab the spec template.
 const SPEC_ARTICLE_URL =
@@ -86,27 +88,31 @@ async function downloadSpecInstructions() {
   }
 }
 
-// Bundled sample documents — shown on launch so the panel is populated before the user
-// opens anything. Each is analysed live by the engine (no hardcoded scores).
-const SAMPLE_DOCS = [
-  { id: 'prd', name: 'PRD-2024-v2.4.md', icon: '📋', size: '2.1 KB' },
-  { id: 'arch', name: 'ARCH-SYS-001.md', icon: '🏗', size: '1.4 KB' },
-  { id: 'security', name: 'SECURITY-SPEC.md', icon: '🔒', size: '0.9 KB' },
-  { id: 'testplan', name: 'TEST-PLAN-Q4.md', icon: '✅', size: '3.2 KB' },
-  { id: 'api', name: 'API-GATEWAY.json', icon: '⚡', size: '1.8 KB' },
-].map((d) => {
-  const sample = SAMPLES[d.id as keyof typeof SAMPLES]
-  return makeDoc({ id: d.id, name: d.name, icon: d.icon, content: sample.content, hint: sample.hint, size: d.size })
-})
-
 export function StructureView() {
-  const [docs, setDocs] = useState(SAMPLE_DOCS)
-  const [activeId, setActiveId] = useState(SAMPLE_DOCS[0].id)
+  // Start empty — the panel populates only from files the user actually opens (no bundled
+  // sample docs). See docs/BUILD-BACKLOG.md: mock/sample data purged (S69 disposition).
+  const [docs, setDocs] = useState<Doc[]>([])
+  const [activeId, setActiveId] = useState('')
   const [query, setQuery] = useState('')
   const [mode, setMode] = useState<'overview' | 'document' | 'ears' | 'sections' | 'bdd'>('overview')
   const [collapsed, setCollapsed] = useState(false)
   const [genFor, setGenFor] = useState<{ id: string; gherkin: string; stories: number; acs: number } | null>(null)
+  // The search term carried into the document reader when a doc is opened from a cross-file
+  // search — drives the in-doc highlight + scroll-to-first-match (Activity 3b).
+  const [carriedQuery, setCarriedQuery] = useState('')
+  const readerRef = useRef<HTMLDivElement>(null)
   const activeDoc = docs.find((d) => d.id === activeId) ?? docs[0]
+
+  // Open a doc from the file list. When a cross-file search is active, carry the query into the
+  // document view so the reader highlights the term and scrolls to the first hit — the piece the
+  // cross-file search was missing (it found *which* file matched, not *where*).
+  function openDoc(id: string, searchTerm?: string) {
+    setActiveId(id)
+    if (searchTerm && searchTerm.trim()) {
+      setCarriedQuery(searchTerm.trim())
+      setMode('document')
+    }
+  }
 
   function removeDoc(id: string) {
     setDocs((prev) => prev.filter((d) => d.id !== id))
@@ -187,6 +193,69 @@ export function StructureView() {
       return `<pre>${escapeHtml(content)}</pre>`
     }
   }, [activeDoc])
+
+  // Corpus stats — derived live from the open documents (no hardcoded numbers). File count is
+  // the number of open docs; total requirements sums each doc's EARS requirement lines; the
+  // PASS/WARN/FAIL buckets count docs by composite score (>80 / 60–80 / <60) via the same engine
+  // output the rest of the page renders from.
+  const corpus = useMemo(() => {
+    let requirements = 0
+    let pass = 0
+    let warn = 0
+    let fail = 0
+    for (const d of docs) {
+      const ears = d.result.signals.find((s: any) => s.type === 'ears-coverage')
+      requirements += ears?.requirements?.length ?? 0
+      if (d.score > 80) pass++
+      else if (d.score >= 60) warn++
+      else fail++
+    }
+    return { files: docs.length, requirements, pass, warn, fail }
+  }, [docs])
+
+  // In-doc highlight — reproduces the vanilla search.js highlight + scroll-to-first-match in the
+  // React reader. Runs after the doc HTML is committed: strips any prior <mark>s, then wraps every
+  // case-insensitive occurrence of the carried query in <mark class="doc-hl"> and scrolls the first
+  // into view. Walks text nodes (never innerHTML string surgery), so the rendered markup is safe.
+  useEffect(() => {
+    const root = readerRef.current
+    if (!root) return
+    root.querySelectorAll('mark.doc-hl').forEach((m) => {
+      const parent = m.parentNode
+      if (!parent) return
+      parent.replaceChild(document.createTextNode(m.textContent || ''), m)
+      parent.normalize()
+    })
+    const term = carriedQuery.trim()
+    if (!term || mode !== 'document') return
+    const lc = term.toLowerCase()
+    const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT)
+    const textNodes: Text[] = []
+    let n = walker.nextNode()
+    while (n) { textNodes.push(n as Text); n = walker.nextNode() }
+    let first: HTMLElement | null = null
+    for (const textNode of textNodes) {
+      const text = textNode.nodeValue || ''
+      const lower = text.toLowerCase()
+      if (!lower.includes(lc)) continue
+      const frag = document.createDocumentFragment()
+      let i = 0
+      let idx = lower.indexOf(lc)
+      while (idx !== -1) {
+        if (idx > i) frag.appendChild(document.createTextNode(text.slice(i, idx)))
+        const mark = document.createElement('mark')
+        mark.className = 'doc-hl'
+        mark.textContent = text.slice(idx, idx + term.length)
+        frag.appendChild(mark)
+        if (!first) first = mark
+        i = idx + term.length
+        idx = lower.indexOf(lc, i)
+      }
+      if (i < text.length) frag.appendChild(document.createTextNode(text.slice(i)))
+      textNode.parentNode?.replaceChild(frag, textNode)
+    }
+    if (first) first.scrollIntoView({ block: 'center', behavior: 'smooth' })
+  }, [renderedDoc, carriedQuery, mode, activeId])
 
   // Empty state — guard before any activeDoc-dependent computation (e.g. all files removed).
   if (docs.length === 0) {
@@ -300,7 +369,7 @@ export function StructureView() {
               { id: 'sections', label: 'Sections', icon: 'book' },
               { id: 'bdd', label: 'BDD Generator', icon: 'search' },
               { id: 'author', label: 'Spec Author', icon: 'edit', href: '/author' },
-              { id: 'antagonist', label: 'Quality Antagonist', icon: 'chat', href: '/antagonist' },
+              { id: 'mockup', label: 'Mockup Canvas', icon: 'layout', href: '/mockup' },
             ]
           },
         ]}
@@ -409,7 +478,7 @@ export function StructureView() {
                   <div
                     key={doc.id}
                     className={`doc-item ${activeDoc.id === doc.id ? 'active' : ''}`}
-                    onClick={() => setActiveId(doc.id)}
+                    onClick={() => openDoc(doc.id, q ? query : undefined)}
                     tabIndex={0}
                   >
                     <span className="doc-icon">{doc.icon}</span>
@@ -439,27 +508,27 @@ export function StructureView() {
 
                 <div className="divider"></div>
 
-                {/* Corpus stats */}
+                {/* Corpus stats — derived live from open docs (no hardcoded numbers) */}
                 <div className="card-sm" style={{background:'var(--sf2)',borderRadius:'var(--r-md)',marginTop:'var(--s2)'}}>
                   <div className="flex-between mb-3">
                     <span className="t-xs text-muted fw-600" style={{textTransform:'uppercase',letterSpacing:'.06em'}}>Corpus</span>
-                    <span className="t-xs text-faint">5 files</span>
+                    <span className="t-xs text-faint">{corpus.files} file{corpus.files === 1 ? '' : 's'}</span>
                   </div>
                   <div className="timc-row">
                     <div className="timc-lbl">Total requirements</div>
-                    <div className="timc-val">184</div>
+                    <div className="timc-val">{corpus.requirements}</div>
                   </div>
                   <div className="timc-row">
                     <div className="timc-lbl">PASS ({'>'}80)</div>
-                    <div className="timc-val text-ok">3</div>
+                    <div className="timc-val text-ok">{corpus.pass}</div>
                   </div>
                   <div className="timc-row">
                     <div className="timc-lbl">WARN (60–80)</div>
-                    <div className="timc-val text-warn">1</div>
+                    <div className="timc-val text-warn">{corpus.warn}</div>
                   </div>
                   <div className="timc-row">
                     <div className="timc-lbl">FAIL ({'<'}60)</div>
-                    <div className="timc-val text-err">1</div>
+                    <div className="timc-val text-err">{corpus.fail}</div>
                   </div>
                 </div>
 
@@ -511,17 +580,35 @@ export function StructureView() {
                   </div>
                 </div>
               ) : mode === 'document' ? (
-                <div
-                  className="sv-panel-body doc-reader"
-                  onClick={(e) => {
-                    const a = (e.target as HTMLElement).closest('a')
-                    if (a && a.getAttribute('href')) {
-                      e.preventDefault()
-                      ;(window as any).structview?.openExternal?.(a.getAttribute('href'))
-                    }
-                  }}
-                  dangerouslySetInnerHTML={{ __html: renderedDoc }}
-                />
+                <>
+                  {carriedQuery && (
+                    <div className="doc-hl-bar flex items-center gap-2" style={{padding:'var(--s2) var(--s4)',borderBottom:'1px solid var(--bd)',background:'var(--sf2)'}}>
+                      <span className="t-xs text-muted">
+                        Highlighting “{carriedQuery}” · {countMatches(activeDoc.content, carriedQuery.toLowerCase())} match{countMatches(activeDoc.content, carriedQuery.toLowerCase()) === 1 ? '' : 'es'} in {activeDoc.name}
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => setCarriedQuery('')}
+                        className="t-xs"
+                        style={{marginLeft:'auto',background:'none',border:'none',color:'var(--ft-blue)',cursor:'pointer',padding:0}}
+                      >
+                        Clear
+                      </button>
+                    </div>
+                  )}
+                  <div
+                    ref={readerRef}
+                    className="sv-panel-body doc-reader"
+                    onClick={(e) => {
+                      const a = (e.target as HTMLElement).closest('a')
+                      if (a && a.getAttribute('href')) {
+                        e.preventDefault()
+                        ;(window as any).structview?.openExternal?.(a.getAttribute('href'))
+                      }
+                    }}
+                    dangerouslySetInnerHTML={{ __html: renderedDoc }}
+                  />
+                </>
               ) : (
                 <div className="sv-panel-body">
                   {/* EARS analysis — per requirement */}
