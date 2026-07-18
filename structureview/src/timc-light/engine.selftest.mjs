@@ -90,6 +90,61 @@ ok('bdd breakdown counts scenarios', scoreBddCoverage('Scenario: a\n Given x\n W
 // BDD coverage precision — prose "Scenario:/Example:" lines without Given/When/Then are ignored
 ok('bdd precision: prose scenarios ignored', scoreBddCoverage('- Example: ["a","b"]\n- Scenario: foo bar').breakdown.scenarios === 0);
 
+// BDD coverage — AC-DENOMINATED (the success-theater fix): score is ACs-with-a-well-formed-scenario
+// over total ACs, not well-formed/total scenarios. Uncovered ACs are flagged by id.
+const specIdMode = `## 8. Acceptance Criteria
+- **AC1** — the system shall log events
+- **AC2** — the system shall alert on failure
+- **AC3** — the system shall retry on transient error
+
+## 4. BDD Scenarios
+Scenario: AC1 — logging
+  Given the system is ready
+  When an event occurs
+  Then it is logged
+Scenario: AC2 — alerting
+  Given the system is ready
+  When a failure occurs
+  Then an alert fires`;
+const covId = scoreBddCoverage(specIdMode);
+ok('AC-denominated: denominator is ACs not scenarios', covId.breakdown.acsTotal === 3 && covId.breakdown.acsCovered === 2);
+ok('AC-denominated: score = 2/3, not 100', Math.round(covId.score) === 67);
+ok('AC-denominated: uncovered AC flagged by id', covId.breakdown.missingAcs.length === 1 && covId.breakdown.missingAcs[0] === 'AC3');
+ok('AC-denominated: id-match mode + finding names the id', covId.breakdown.matchMode === 'id' && covId.findings.some((f) => /AC3/.test(f.message)));
+
+// No AC ids on the scenarios (canonical descriptive names) → count fallback, still AC-denominated.
+const specCount = `## Acceptance Criteria
+- [ ] the app exits 0
+- [ ] the config file exists
+- [ ] the release section is present
+
+## Scenarios
+Scenario: happy path
+  Given the system is ready
+  When the pipeline runs
+  Then it exits 0`;
+const covCount = scoreBddCoverage(specCount);
+ok('count fallback: 1 of 3 ACs covered', covCount.breakdown.acsCovered === 1 && covCount.breakdown.acsTotal === 3);
+ok('count fallback: match mode is count', covCount.breakdown.matchMode === 'count');
+ok('count fallback: trailing ACs flagged by id', covCount.breakdown.missingAcs.join(',') === 'AC02,AC03');
+
+// Well-formedness stays a SEPARATE secondary check: a malformed scenario does not earn AC coverage
+// and is surfaced with its own missing-step finding.
+const specMalformed = `## Acceptance Criteria
+- [ ] alpha
+- [ ] beta
+
+Scenario: AC01 — alpha behaviour
+  Given the system is ready
+  When alpha runs`;
+const covMal = scoreBddCoverage(specMalformed);
+ok('secondary: malformed scenario earns no coverage', covMal.breakdown.acsCovered === 0);
+ok('secondary: malformed scenario flagged for missing Then', covMal.findings.some((f) => /missing.*Then/i.test(f.message)));
+
+// The generator's denominator now comes from the SHARED extractor — same count the coverage signal
+// denominates by (this is what stops the two numbers from drifting).
+ok('shared extractor: generator AC count matches coverage denominator', generateBdd(specCount).acceptanceCriteria.length === covCount.breakdown.acsTotal);
+
 // Section completeness — per-section present/missing list
 const secList = scoreSectionCompleteness('## Objective\n## Scope');
 ok('sections list length 10', secList.sections.length === 10);
