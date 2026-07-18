@@ -4,7 +4,7 @@ Superseded / throwaway code, kept for reference but **excluded from the shipped 
 quality gate** (see `.eslintrc.cjs` `ignorePatterns` and `jest.config.cjs` `testPathIgnorePatterns`,
 and the electron `build.files` glob which only packages `src/**`).
 
-The spike rule (owner): *Swiss cheese is fine in a spike.* Spike code does not get backfilled to the
+The spike rule (owner): _Swiss cheese is fine in a spike._ Spike code does not get backfilled to the
 coverage threshold — that would be testing throwaway. It gets **moved here and labeled** so the
 coverage number stops counting it as untested shipped product. A 4%-covered file honestly in
 `spikes/` is not a bug; a 4%-covered file in a shipped path pretending to be product is.
@@ -19,12 +19,12 @@ any of these modules. Nothing shipped imports them. Last meaningful change: 2026
 Product-vs-spike triage of the four renderer files called out in the coverage-debt finding
 (before-move statement coverage in parentheses):
 
-| File | Before | Wired in a shipped path? | Call |
-|------|-------:|--------------------------|------|
-| `js/app.js` (was `src/renderer/js/app.js`) | 22.4% | No — not loaded by any HTML | **spike → relocated** |
-| `js/renderer/search.js` (`DocSearch`) | 4.9% | No — no script tag / import | **spike → relocated** |
-| `js/renderer/sidebar.js` (`Sidebar`) | 11.1% | No — no script tag / import | **spike → relocated** |
-| `js/renderer/tabs.js` (`Tabs`) | 4.8% | No — no script tag / import | **spike → relocated** |
+| File                                       | Before | Wired in a shipped path?    | Call                  |
+| ------------------------------------------ | -----: | --------------------------- | --------------------- |
+| `js/app.js` (was `src/renderer/js/app.js`) |  22.4% | No — not loaded by any HTML | **spike → relocated** |
+| `js/renderer/search.js` (`DocSearch`)      |   4.9% | No — no script tag / import | **spike → relocated** |
+| `js/renderer/sidebar.js` (`Sidebar`)       |  11.1% | No — no script tag / import | **spike → relocated** |
+| `js/renderer/tabs.js` (`Tabs`)             |   4.8% | No — no script tag / import | **spike → relocated** |
 
 Decision: **all four are spike/legacy, not product.** They are unwired (the shipped renderer is the
 React bundle; the vanilla fallback reimplements its logic inline), superseded, and untouched for
