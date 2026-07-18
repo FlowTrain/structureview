@@ -40,5 +40,9 @@ module.exports = {
     'src/renderer/js/vendor/',
     'ui/',
     'src/renderer-dist/',
+    // Spike / superseded code is intentionally exempt from the gate — "Swiss cheese is fine in a
+    // spike." The legacy vanilla renderer (unwired, replaced by the React UI) lives here so it
+    // stops inflating the shipped coverage denominator. See spikes/README.md.
+    'spikes/',
   ],
 };

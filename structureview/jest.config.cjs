@@ -1,7 +1,7 @@
 module.exports = {
   testEnvironment: 'node',
   testMatch: ['**/__tests__/**/*.test.js'],
-  testPathIgnorePatterns: ['/node_modules/', '__tests__/__helpers__/'],
+  testPathIgnorePatterns: ['/node_modules/', '__tests__/__helpers__/', '/spikes/'],
   collectCoverage: true,
   collectCoverageFrom: [
     'src/**/*.js',
