@@ -14,6 +14,31 @@ function extractToken(url) {
   return m ? decodeURIComponent(m[1]) : null;
 }
 
+// Resolve with the token once navigation reaches the callback URL; reject if the window closes
+// first or the callback carries no token. Kept module-level (out of createAuthBridge) so the
+// orchestrator stays short.
+function captureCallback(win, callbackPrefix) {
+  return new Promise((resolve, reject) => {
+    let settled = false;
+    const finish = (fn, value) => {
+      if (settled) return;
+      settled = true;
+      fn(value);
+    };
+    win.on('will-navigate', (url) => {
+      if (!url.startsWith(callbackPrefix)) return;
+      const token = extractToken(url);
+      // Settle BEFORE closing — close() may fire 'closed' synchronously.
+      if (token) finish(resolve, token);
+      else finish(reject, new Error('Sign-in callback contained no token'));
+      win.close();
+    });
+    win.on('closed', () => {
+      finish(reject, new Error('Sign-in cancelled'));
+    });
+  });
+}
+
 function createAuthBridge({
   browserWindowFactory,
   tokens,
@@ -25,32 +50,10 @@ function createAuthBridge({
     throw new Error('createAuthBridge: all dependencies are required');
   }
 
-  function captureCallback(win) {
-    return new Promise((resolve, reject) => {
-      let settled = false;
-      const finish = (fn, value) => {
-        if (settled) return;
-        settled = true;
-        fn(value);
-      };
-      win.on('will-navigate', (url) => {
-        if (!url.startsWith(callbackPrefix)) return;
-        const token = extractToken(url);
-        // Settle BEFORE closing — close() may fire 'closed' synchronously.
-        if (token) finish(resolve, token);
-        else finish(reject, new Error('Sign-in callback contained no token'));
-        win.close();
-      });
-      win.on('closed', () => {
-        finish(reject, new Error('Sign-in cancelled'));
-      });
-    });
-  }
-
   async function signIn() {
     const win = browserWindowFactory();
     win.loadURL(signInUrl);
-    const token = await captureCallback(win);
+    const token = await captureCallback(win, callbackPrefix);
     await tokens.set(token);
     return backendClient.me();
   }

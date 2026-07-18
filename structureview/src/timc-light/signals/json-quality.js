@@ -46,27 +46,49 @@ function findFirstArrayOfObjects(parsed) {
   return null;
 }
 
-function computeKeyConsistency(arr) {
-  if (arr.length === 0) return 100;
+function modalKeys(arr) {
   const keyFreq = new Map();
   for (const item of arr) for (const key of Object.keys(item)) keyFreq.set(key, (keyFreq.get(key) ?? 0) + 1);
   const threshold = arr.length * 0.5;
-  const modalKeys = new Set();
-  for (const [key, count] of keyFreq.entries()) if (count > threshold) modalKeys.add(key);
-  if (modalKeys.size === 0) return 100;
+  const modal = new Set();
+  for (const [key, count] of keyFreq.entries()) if (count > threshold) modal.add(key);
+  return modal;
+}
+
+function itemConsistency(item, modal) {
+  const itemKeys = new Set(Object.keys(item));
+  let common = 0;
+  for (const mk of modal) if (itemKeys.has(mk)) common++;
+  return (common / modal.size) * 100;
+}
+
+function computeKeyConsistency(arr) {
+  if (arr.length === 0) return 100;
+  const modal = modalKeys(arr);
+  if (modal.size === 0) return 100;
   let totalScore = 0;
-  for (const item of arr) {
-    const itemKeys = new Set(Object.keys(item));
-    let common = 0;
-    for (const mk of modalKeys) if (itemKeys.has(mk)) common++;
-    totalScore += (common / modalKeys.size) * 100;
-  }
+  for (const item of arr) totalScore += itemConsistency(item, modal);
   return totalScore / arr.length;
+}
+
+function envelopeScore(parsed) {
+  if (parsed !== null && typeof parsed === 'object' && !Array.isArray(parsed)) {
+    if ('data' in parsed || 'errors' in parsed || 'meta' in parsed) return 100;
+  }
+  return 0;
+}
+
+function qualityFindings(dims) {
+  const findings = [];
+  if (dims.nullDensity < 60) findings.push({ message: 'High null density detected — response contains too many null values', severity: 'warning' });
+  if (dims.keyConsistency < 60) findings.push({ message: 'Inconsistent keys across array items', severity: 'warning' });
+  if (dims.nestingDepth < 60) findings.push({ message: 'Nesting depth exceeds recommended maximum of 5', severity: 'warning' });
+  if (dims.envelopeShape === 0) findings.push({ message: 'Response lacks standard API envelope (data/errors/meta)', severity: 'info' });
+  return findings;
 }
 
 /** Returns a SignalResult with a 0–100 composite score and a 5-dimension breakdown. */
 export function scoreJsonQuality(content) {
-  const findings = [];
   let parsed;
   try {
     parsed = JSON.parse(content);
@@ -89,10 +111,7 @@ export function scoreJsonQuality(content) {
   const depth = maxDepth(parsed, 0);
   const nestingDepth = Math.max(0, Math.min(100, 100 - (depth - 5) * 20));
 
-  let envelopeShape = 0;
-  if (parsed !== null && typeof parsed === 'object' && !Array.isArray(parsed)) {
-    if ('data' in parsed || 'errors' in parsed || 'meta' in parsed) envelopeShape = 100;
-  }
+  const envelopeShape = envelopeScore(parsed);
 
   const compositeScore =
     parseability   * WEIGHTS.parseability   +
@@ -103,13 +122,9 @@ export function scoreJsonQuality(content) {
 
   const canResolve = compositeScore >= 70; // FIX: CCQG source had `< 70` (inverted)
 
-  if (nullDensity < 60) findings.push({ message: 'High null density detected — response contains too many null values', severity: 'warning' });
-  if (keyConsistency < 60) findings.push({ message: 'Inconsistent keys across array items', severity: 'warning' });
-  if (nestingDepth < 60) findings.push({ message: 'Nesting depth exceeds recommended maximum of 5', severity: 'warning' });
-  if (envelopeShape === 0) findings.push({ message: 'Response lacks standard API envelope (data/errors/meta)', severity: 'info' });
-
+  const breakdown = { parseability, nullDensity, keyConsistency, nestingDepth, envelopeShape };
   return {
-    signalId: 'json-quality', type: 'json-quality', score: compositeScore, findings, canResolve,
-    breakdown: { parseability, nullDensity, keyConsistency, nestingDepth, envelopeShape },
+    signalId: 'json-quality', type: 'json-quality', score: compositeScore,
+    findings: qualityFindings(breakdown), canResolve, breakdown,
   };
 }

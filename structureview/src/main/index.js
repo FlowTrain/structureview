@@ -58,53 +58,45 @@ function createWindow() {
 
 // ─── Application Menu ───────────────────────────────────────────────────────
 
-function buildMenu() {
-  const template = [
-    {
-      label: 'File',
-      submenu: [
-        {
-          label: 'Open File…',
-          accelerator: 'CmdOrCtrl+O',
-          click: () => openFileDialog(),
-        },
-        {
-          label: 'Open Folder…',
-          accelerator: 'CmdOrCtrl+Shift+O',
-          click: () => openFolderDialog(),
-        },
-        { type: 'separator' },
-        { role: 'quit' },
-      ],
-    },
-    {
-      label: 'View',
-      submenu: [
-        { role: 'reload' },
-        { role: 'toggleDevTools', visible: isDev },
-        { type: 'separator' },
-        { role: 'resetZoom' },
-        { role: 'zoomIn' },
-        { role: 'zoomOut' },
-        { type: 'separator' },
-        { role: 'togglefullscreen' },
-      ],
-    },
-    {
-      label: 'Help',
-      submenu: [
-        {
-          label: 'About StructView',
-          click: () => {
-            if (mainWindow) {
-              mainWindow.webContents.send('show-about');
-            }
-          },
-        },
-      ],
-    },
-  ];
+function fileMenu() {
+  return {
+    label: 'File',
+    submenu: [
+      { label: 'Open File…', accelerator: 'CmdOrCtrl+O', click: () => openFileDialog() },
+      { label: 'Open Folder…', accelerator: 'CmdOrCtrl+Shift+O', click: () => openFolderDialog() },
+      { type: 'separator' },
+      { role: 'quit' },
+    ],
+  };
+}
 
+function viewMenu() {
+  return {
+    label: 'View',
+    submenu: [
+      { role: 'reload' },
+      { role: 'toggleDevTools', visible: isDev },
+      { type: 'separator' },
+      { role: 'resetZoom' },
+      { role: 'zoomIn' },
+      { role: 'zoomOut' },
+      { type: 'separator' },
+      { role: 'togglefullscreen' },
+    ],
+  };
+}
+
+function helpMenu() {
+  return {
+    label: 'Help',
+    submenu: [
+      { label: 'About StructView', click: () => mainWindow && mainWindow.webContents.send('show-about') },
+    ],
+  };
+}
+
+function buildMenu() {
+  const template = [fileMenu(), viewMenu(), helpMenu()];
   Menu.setApplicationMenu(Menu.buildFromTemplate(template));
 }
 
