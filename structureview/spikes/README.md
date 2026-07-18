@@ -38,3 +38,18 @@ Sibling modules `src/renderer/js/renderer/markdown.js` and `json.js` were **kept
 genuinely tested libraries (93–94%) and out of scope for this triage.
 
 If the vanilla renderer is ever fully retired, this directory can be deleted outright.
+
+## s73-antagonist/
+
+`antagonist.js` — the S73 main-process LLM caller (`generate` + `loadGovernance`). **0% covered**,
+unwired: its IPC handlers and preload exposure were removed 2026-07-11 (see the "retained but
+unwired" comments in `src/main/index.js` and `src/main/preload.js`, now pointing here), and the UI
+route was removed too. It is parked spike for the deferred S73 Phase A/B PRs, and it hardcodes a
+personal governance path (`C:\Users\JamesGifford\...\CLAUDE.md`), so it is not shippable as-is.
+
+Decision: **test-or-delete → resolved as delete-from-shipped via relocation.** Backfilling a parked
+spike to 85% is the "don't backfill throwaway" anti-pattern; testing it would also imply it's product,
+which contradicts the antagonist's retirement from this app. Relocated here so it stops inflating the
+shipped coverage denominator, while preserving the code and its re-entry notes for the S73 wiring PR.
+(Relocated rather than `rm`'d because this working tree's mount blocks `unlink`; relocation is the
+equivalent — it is out of `src/**`, so out of the build and the coverage denominator.)

@@ -31,8 +31,8 @@ contextBridge.exposeInMainWorld('structview', {
   },
 
   // Antagonist (S73 spike) is intentionally NOT exposed on the shipping surface.
-  // The main-process module (src/main/antagonist.js) is retained but unwired; re-expose
-  // here — and update __tests__/preload.test.js + a Decision Log entry — when S73 ships it.
+  // The main-process module lives in spikes/s73-antagonist/antagonist.js (relocated out of src/);
+  // re-expose here — and update __tests__/preload.test.js + a Decision Log entry — when S73 ships it.
 
   // Cleanup
   removeAllListeners: (channel) => ipcRenderer.removeAllListeners(channel),

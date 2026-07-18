@@ -220,7 +220,8 @@ ipcMain.handle('open-external', (_e, url) => {
 ipcMain.handle('get-app-version', () => app.getVersion());
 
 // Antagonist (S73 spike) IPC handlers intentionally not registered on the shipping surface.
-// src/main/antagonist.js is retained but unwired; re-register here — and update
+// The module lives in spikes/s73-antagonist/antagonist.js (relocated out of src/ so it stops
+// counting as untested shipped code); re-register here — and update
 // __tests__/main-index-surface.test.js + a Decision Log entry — when S73 ships it.
 
 // Handle file passed as CLI argument (e.g. double-clicked from OS)
