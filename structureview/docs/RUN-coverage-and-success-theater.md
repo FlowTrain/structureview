@@ -1,7 +1,7 @@
 # Run — Kill the Success Theater + Pay the Coverage Debt
 
 > **Self-contained work order, in-repo** (lives here on purpose — a fresh-sandbox agent clones this
-> repo and must find everything it needs *inside* it; do not reference files above the repo root).
+> repo and must find everything it needs _inside_ it; do not reference files above the repo root).
 > Prepared 2026-07-18. Everything it references — `AGENTS.md`, `CLAUDE.md`, `docs/BUILD-BACKLOG.md` —
 > is in this repo. **Prereq: this file and the BUILD-BACKLOG edits it points to must be committed and
 > pushed to the run branch before the sandbox is refreshed** (see the "Publish before you hand off"
@@ -24,8 +24,8 @@
 
 - `npm run quality-gate` green after **every** activity.
 - No new mock data.
-- **Spike rule (owner):** Swiss cheese is fine *in a spike*. Do NOT backfill throwaway code — decide
-  **product vs spike per file**; product gets tests, spike gets *moved/labeled* so the coverage number
+- **Spike rule (owner):** Swiss cheese is fine _in a spike_. Do NOT backfill throwaway code — decide
+  **product vs spike per file**; product gets tests, spike gets _moved/labeled_ so the coverage number
   stops lying. A 4% file in `ui/` claiming shipped is the bug; a 4% file honestly in `spikes/` is not.
 - **Do NOT re-promote the gate config to hard-block until activities 1–3 are done.** Blocking your own
   build then softening the gate is the exact reinforcing loop Paper One is about — don't reproduce it.
@@ -73,4 +73,4 @@ searching for files that are "just outside what it can see."
   3. `git push -u origin run/<name>`; 4. then refresh the sandbox / point the agent at the branch.
 
 The original failure was a work order left in a file **above the repo root** (the fleet folder isn't a
-git repo) — invisible to *either* model. Keep the brief in-repo; that fixes both.
+git repo) — invisible to _either_ model. Keep the brief in-repo; that fixes both.

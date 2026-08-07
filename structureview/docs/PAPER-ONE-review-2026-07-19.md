@@ -18,7 +18,7 @@
    - **TWO CORRECTIONS APPLIED to the paper §5:** baseline churn is **3.1% (2020)**, not 3.3%; and the
      **"7.1% (2025)" was UNCONFIRMED and has been removed** (latest verified figure is 5.7%/2024;
      "3.1%→5.7%" still supports "roughly doubling"). If 7.1% is real (GitClear 2026 "Maintainability
-     Gap" report), it can be re-added *with* that cite.
+     Gap" report), it can be re-added _with_ that cite.
    - Not separately re-verified (low-risk, book/gov citations): SEC $88M/11-firm wave, FINRA BTIG $600K,
      NASA Stecklein, Menzies 2017 — spot-check before final submission but not blocking.
 
@@ -29,8 +29,8 @@
    confound ruled out. If it doesn't → §6's honest wording ("suggestive, not probative") stands and the
    empirical claim is weaker than the prose implies. **Confirm the artifact exists.**
 
-3. **Fix one overstatement.** §5: "I interviewed Bernstein — twice — and Martin … *about these exact
-   ideas*." The interviews were about craftsmanship / legacy code, not the read-only-Antagonist concept
+3. **Fix one overstatement.** §5: "I interviewed Bernstein — twice — and Martin … _about these exact
+   ideas_." The interviews were about craftsmanship / legacy code, not the read-only-Antagonist concept
    (which is new). Change to "…about the craftsmanship practices this rests on." Keeps the (strong,
    true) first-degree-provenance claim without a challengeable overreach.
 

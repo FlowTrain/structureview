@@ -28,7 +28,7 @@ That's the context contract. Everything else is retrieved just-in-time per activ
   currently green (antagonist main-process unwired 2026-07-11); keep it that way.
 - **Do NOT touch `src/main/antagonist.js`** or re-wire the antagonist main process — that's
   retained-but-unwired spike code; re-wiring needs a contract-test update + Decision Log entry.
-  (Activity 3 removes the *React route*, which is different — see §4.)
+  (Activity 3 removes the _React route_, which is different — see §4.)
 - **Per-activity commits.** One activity = one focused commit/PR. No mega-commits.
 - **Real work only.** Activity 1 removes fake data; don't add new mock data anywhere.
 - **If a decision is genuinely the owner's, stop and log it** (`[NEEDS OWNER]`) — don't guess.
@@ -42,6 +42,7 @@ hardcoded JSX (`5 files`, `184`, `PASS 3 / WARN 1 / FAIL 1`). It reads nothing; 
 whether 0 or 80 files are open.
 
 **Do:**
+
 - Replace the hardcoded Corpus block with values **derived from the live `docs` state** via
   `useMemo`: file count = `docs.length`; total requirements = sum of each doc's TIMC analysis
   count; PASS/WARN/FAIL = count docs by composite score (>80 / 60–80 / <60), using the analysis
@@ -51,6 +52,7 @@ whether 0 or 80 files are open.
   honestly ("No documents open — Open folder").
 
 **Acceptance:**
+
 - [ ] Open 0 files → Corpus shows 0 / empty, not `184`.
 - [ ] Open N real files → counts + buckets reflect them, live.
 - [ ] No hardcoded corpus numbers or `timc-samples` seeding remain on the shipping surface.
@@ -62,6 +64,7 @@ whether 0 or 80 files are open.
 what's specified — do not re-design.
 
 **Item B1 — the spike:**
+
 - New **lazy-loaded** `/mockup` route → `ui/src/pages/MockupCanvas.tsx` + a Sidebar nav item.
 - Click-to-add region boxes on a CSS grid; region type from the **B1D vocabulary**
   (header / sidebar / content / footer / overlay). Click a region → component rows; per component:
@@ -69,17 +72,19 @@ what's specified — do not re-design.
   dependency** (click-to-add + arrow-key nudge; @dnd-kit is a later fast-follow).
 - **The reveal:** a button flips the right pane to the **existing JSON tree renderer**
   (`src/renderer/js/renderer/json.js` path) fed by canvas state. Caption verbatim:
-  *"a more precise version of what you already drew."* Canvas state model **is** the B1D
+  _"a more precise version of what you already drew."_ Canvas state model **is** the B1D
   deliverable JSON (regions → components → dataElements → states) — reveal is a view toggle.
 - Persistence per SpecAuthor: `localStorage` single-slot autosave, `Download .json` (slugged).
 
 **Item B2 — class-ready:**
+
 - A lint pane mirroring the **B1D acceptance** (≥3 regions, ≥3 states incl. one error/empty, data
   elements present) shown emerging / working / strong.
 - `Download .html` — canvas state as a skeleton `ui-layout-[screen].html` (the B1D artifact).
 - Empty/error states for the canvas itself; new tests pass the gate.
 
 **Acceptance:**
+
 - [ ] `npm run ui:build` clean; `/mockup` lazy-loads (not in main bundle until opened).
 - [ ] Canvas → reveal → `Download .json` round-trips on a real screen; output validates against
       the B1D deliverable shape; `Download .html` yields a usable skeleton.
@@ -93,12 +98,14 @@ what's specified — do not re-design.
 **3a — Remove the Antagonist React route/page.** Main process is already unwired; the
 `/antagonist` route (`ui/src/pages/Antagonist.tsx`) + Sidebar nav item still ship and would call a
 missing bridge. Remove the route + nav item (leave `Antagonist.tsx` on disk; just stop routing).
+
 - [ ] No Antagonist nav item/route in the shipping UI. App builds. Gate green.
 
 **3b — Cross-file search → in-doc highlight.** StructView already has in-doc search
 (`src/renderer/js/renderer/search.js`, Ctrl+F, match nav). When a result opens from a
 **cross-file** search, carry the query into the document view and fire the existing highlight +
 scroll-to-first-match. Wiring two existing features, not new infrastructure.
+
 - [ ] Opening a cross-file match highlights the term + scrolls to first hit. Gate green.
 - [ ] Commits: `chore(ui): remove antagonist route`; `feat(ui): carry search query into opened doc`.
 
@@ -133,5 +140,5 @@ that stays inside its constitution under real work.
 - Notes / surprises: <anything the owner should know>
 ```
 
-*Owner note: this is your third big-three item, full batch. When the report comes back green, that
-loop closes — star it in the weekly review.*
+_Owner note: this is your third big-three item, full batch. When the report comes back green, that
+loop closes — star it in the weekly review._

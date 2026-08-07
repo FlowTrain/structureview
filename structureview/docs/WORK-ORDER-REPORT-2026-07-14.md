@@ -1,6 +1,6 @@
 # Work Order Report — 2026-07-14 — Claude Code (routed via Dispatch)
 
-> Re: *Work Order — StructureView: JSON→UI Activity + Bug Fixes* (prepared 2026-07-11).
+> Re: _Work Order — StructureView: JSON→UI Activity + Bug Fixes_ (prepared 2026-07-11).
 > Dispatch proof-point run. All three activities shipped; the quality gate is green on the
 > final state; per-activity commits present; one pre-existing blocker and two `[NEEDS OWNER]`
 > items surfaced rather than guessed.
@@ -16,8 +16,8 @@
   Lazy `/mockup` route (separate 24 kB chunk, not in the main bundle) + Sidebar nav item.
   Click-to-add region boxes on a CSS grid from the B1D vocabulary, arrow-key nudge (no dnd-kit),
   component rows with data-element chips + state tags. Reveal flips the right pane to a
-  self-contained JSON tree of the canvas state, captioned verbatim *"a more precise version of
-  what you already drew."* localStorage autosave, `Download .json`. B2: B1D lint pane
+  self-contained JSON tree of the canvas state, captioned verbatim _"a more precise version of
+  what you already drew."_ localStorage autosave, `Download .json`. B2: B1D lint pane
   (emerging/working/strong), `Download .html` skeleton `ui-layout-[screen].html`, canvas empty +
   corrupt-draft error states. Verified end-to-end in-browser: built a real screen → reveal →
   persisted deliverable validates against the B1D shape; lint climbs emerging→strong; exported
@@ -38,28 +38,28 @@
      (only an unrelated `ai_upskilling/CLAUDE.md`). Proceeded using `README.md`,
      `docs/BUILD-BACKLOG.md`, and the two spec docs. Owner may want to add them.
 - **Commits (per activity, oldest→newest):**
-  - `95fbf13` fix(main): commit antagonist unwiring so contract tests + gate go green *(pre-flight — see Surprises)*
-  - `a56898a` fix(ui): wire Corpus panel to live docs; purge sample data *(Activity 1)*
-  - `e1f8d78` feat(ui): mockup canvas spike (B1) *(Activity 2)*
-  - `5a55a94` feat(ui): mockup canvas class-ready — B1D lint + html export (B2) *(Activity 2)*
-  - `5a92964` chore(ui): remove antagonist route *(Activity 3a)*
-  - `f700afb` feat(ui): carry search query into opened doc *(Activity 3b)*
+  - `95fbf13` fix(main): commit antagonist unwiring so contract tests + gate go green _(pre-flight — see Surprises)_
+  - `a56898a` fix(ui): wire Corpus panel to live docs; purge sample data _(Activity 1)_
+  - `e1f8d78` feat(ui): mockup canvas spike (B1) _(Activity 2)_
+  - `5a55a94` feat(ui): mockup canvas class-ready — B1D lint + html export (B2) _(Activity 2)_
+  - `5a92964` chore(ui): remove antagonist route _(Activity 3a)_
+  - `f700afb` feat(ui): carry search query into opened doc _(Activity 3b)_
 
 ## Guardrails honored
 
 - `src/main/antagonist.js` **untouched**; the spike stays unwired. Its re-entry still requires the
   documented contract-test update + Decision Log entry.
 - Quality gate green after every activity; per-activity commits; no new mock data (Activity 1
-  *removes* it, and the canvas starts empty — no seeded examples).
+  _removes_ it, and the canvas starts empty — no seeded examples).
 - Context contract respected: read only §0's listed docs (constitution files were missing);
   everything else retrieved just-in-time.
 
 ## Notes / surprises (owner should know)
 
 1. **The gate was RED at baseline — pre-existing uncommitted drift.** The 2026-07-11 antagonist
-   *unwiring* was left uncommitted in `src/main/index.js` + `preload.js`, but the working tree also
+   _unwiring_ was left uncommitted in `src/main/index.js` + `preload.js`, but the working tree also
    had **backwards** edits to `__tests__/main-index-surface.test.js` and `__tests__/preload.test.js`
-   that *re-added* `antagonist:*` expectations — so the contract tests asserted handlers the
+   that _re-added_ `antagonist:*` expectations — so the contract tests asserted handlers the
    unwired source no longer registers (2 failing tests). The work order asserts these "currently
    pass," so this was a genuine surprise. Resolution (commit `95fbf13`): kept the source unwired
    (matches §1 intent + the in-source unwire comments) and dropped the erroneous test additions so
@@ -70,7 +70,7 @@
    `src/renderer-dist/` (the built React app) when present, falling back to `src/renderer/` (the
    vanilla `window.*` renderer). All of Activities 1/2/3a target the React app. For 3b: the work
    order prose cited the vanilla `src/renderer/js/renderer/search.js`, but (a) the vanilla Sidebar
-   only filters by *filename*, not the cross-file *content* search the field-finding describes
+   only filters by _filename_, not the cross-file _content_ search the field-finding describes
    ("referenced in N other specs"), which lives **only** in the React StructureView; and (b) the
    work order's own commit scope for 3b is **`feat(ui)`** — matching its other React changes. So 3b
    was implemented in `ui/`, reproducing the search.js highlight/scroll behavior in the React

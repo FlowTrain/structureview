@@ -16,7 +16,14 @@
   // ── IPC: file events from main process ───────────────────────
 
   sv.onFileLoaded((data) => {
-    console.log('[onFileLoaded] received:', data.filePath, 'ext:', data.ext, 'content length:', data.content?.length);
+    console.log(
+      '[onFileLoaded] received:',
+      data.filePath,
+      'ext:',
+      data.ext,
+      'content length:',
+      data.content?.length
+    );
     Sidebar.addFile(data);
     Tabs.open(data);
   });
@@ -34,10 +41,10 @@
     Sidebar.addFiles(files);
     // Auto-open first file if nothing is currently open
     if (!Tabs.getActivePath() && files.length > 0) {
-      sv.readFile(files[0]).then(result => {
+      sv.readFile(files[0]).then((result) => {
         if (result.ok) {
           const name = files[0].split(/[/\\]/).pop();
-          const ext  = name.split('.').pop().toLowerCase();
+          const ext = name.split('.').pop().toLowerCase();
           Tabs.open({ filePath: files[0], name, ext, ...result });
         }
       });
@@ -79,7 +86,7 @@
 
   async function showAboutModal() {
     const overlay = document.getElementById('modal-overlay');
-    const ver     = document.getElementById('modal-version');
+    const ver = document.getElementById('modal-version');
     try {
       const v = await sv.getAppVersion();
       ver.textContent = `Version ${v}`;
@@ -143,9 +150,9 @@
   function cycleTab(dir) {
     const tabs = Array.from(document.querySelectorAll('.tab'));
     if (tabs.length < 2) return;
-    const activeIdx = tabs.findIndex(t => t.classList.contains('active'));
-    const nextIdx   = (activeIdx + dir + tabs.length) % tabs.length;
-    const nextPath  = tabs[nextIdx].dataset.path;
+    const activeIdx = tabs.findIndex((t) => t.classList.contains('active'));
+    const nextIdx = (activeIdx + dir + tabs.length) % tabs.length;
+    const nextPath = tabs[nextIdx].dataset.path;
     if (nextPath) Tabs.switchTo(nextPath);
   }
 
@@ -167,12 +174,10 @@
     e.preventDefault();
     document.body.classList.remove('drag-over');
 
-    const files = [...e.dataTransfer.files].filter(f =>
-      /\.(md|markdown|json)$/i.test(f.name)
-    );
+    const files = [...e.dataTransfer.files].filter((f) => /\.(md|markdown|json)$/i.test(f.name));
 
-    files.forEach(f => {
-      sv.readFile(f.path).then(result => {
+    files.forEach((f) => {
+      sv.readFile(f.path).then((result) => {
         if (result.ok) {
           const ext = f.name.split('.').pop().toLowerCase();
           Tabs.open({
@@ -193,5 +198,4 @@
       });
     });
   });
-
 })();

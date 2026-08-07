@@ -5,20 +5,19 @@
 ──────────────────────────────────────────────────────────────── */
 
 window.DocSearch = (() => {
+  let matches = [];
+  let current = -1;
+  let lastQuery = '';
 
-  let matches    = [];
-  let current    = -1;
-  let lastQuery  = '';
-
-  const $ = id => document.getElementById(id);
+  const $ = (id) => document.getElementById(id);
 
   function init() {
-    const bar     = $('doc-search-bar');
-    const input   = $('doc-search-input');
-    const count   = $('doc-search-count');
+    const bar = $('doc-search-bar');
+    const input = $('doc-search-input');
+    const count = $('doc-search-count');
     const btnPrev = $('doc-search-prev');
     const btnNext = $('doc-search-next');
-    const btnClose= $('doc-search-close');
+    const btnClose = $('doc-search-close');
     const btnOpen = $('btn-search-in-doc');
 
     // Open / close
@@ -61,7 +60,8 @@ window.DocSearch = (() => {
     function closeSearch() {
       bar.hidden = true;
       clearHighlights();
-      matches = []; current = -1;
+      matches = [];
+      current = -1;
       count.textContent = '';
     }
   }
@@ -70,7 +70,8 @@ window.DocSearch = (() => {
 
   function run(query, countEl) {
     clearHighlights();
-    matches = []; current = -1;
+    matches = [];
+    current = -1;
     lastQuery = query;
 
     if (!query || query.length < 2) {
@@ -85,9 +86,7 @@ window.DocSearch = (() => {
     matches = Array.from(container.querySelectorAll('mark.sv-highlight'));
 
     if (countEl) {
-      countEl.textContent = matches.length
-        ? `1 / ${matches.length}`
-        : 'No results';
+      countEl.textContent = matches.length ? `1 / ${matches.length}` : 'No results';
     }
 
     if (matches.length > 0) {
@@ -109,7 +108,7 @@ window.DocSearch = (() => {
   }
 
   function activate(countEl) {
-    matches.forEach(m => m.classList.remove('current'));
+    matches.forEach((m) => m.classList.remove('current'));
     const m = matches[current];
     if (!m) return;
     m.classList.add('current');
@@ -129,7 +128,7 @@ window.DocSearch = (() => {
         if (p.tagName === 'MARK' || p.closest('pre') || p.closest('code'))
           return NodeFilter.FILTER_REJECT;
         return NodeFilter.FILTER_ACCEPT;
-      }
+      },
     });
 
     const nodesToReplace = [];
@@ -140,7 +139,7 @@ window.DocSearch = (() => {
       }
     }
 
-    nodesToReplace.forEach(textNode => {
+    nodesToReplace.forEach((textNode) => {
       const parent = textNode.parentNode;
       if (!parent) return;
       const frag = document.createDocumentFragment();
@@ -168,7 +167,7 @@ window.DocSearch = (() => {
   function clearHighlights() {
     const container = document.getElementById('doc-content');
     if (!container) return;
-    container.querySelectorAll('mark.sv-highlight').forEach(mark => {
+    container.querySelectorAll('mark.sv-highlight').forEach((mark) => {
       const parent = mark.parentNode;
       if (!parent) return;
       parent.replaceChild(document.createTextNode(mark.textContent), mark);

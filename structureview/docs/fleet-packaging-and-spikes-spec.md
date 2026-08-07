@@ -20,23 +20,23 @@ three different contracts**, plus a promotion ritual between them.
 
 The instinct is right; the industry answer is three cooperating pieces, not one magic repo:
 
-1. **Shared config *packages*** — `@trainyard/eslint-config`, `@trainyard/tsconfig`,
+1. **Shared config _packages_** — `@trainyard/eslint-config`, `@trainyard/tsconfig`,
    `@trainyard/prettier-config`, and the already-real `@trainyard/design-system` (tokens) and
    `@trainyard/timc-light` (engine). Each repo/package extends these instead of copying them.
    Change the rule once in the config package; every consumer inherits it on the next install.
-   *This is how QG's "good stuff" reaches StructureView: it does not get ported — it gets
-   **published and depended upon**.* The S69 disposition already started this (timc-light is a
+   _This is how QG's "good stuff" reaches StructureView: it does not get ported — it gets
+   **published and depended upon**._ The S69 disposition already started this (timc-light is a
    clean package boundary); this spec makes it the rule, not the exception.
 2. **Org-level `.github` repo** — GitHub's special repo whose reusable workflows and default
    community health files (CODEOWNERS, PR templates, the quality-gate workflow) are inherited by
-   every repo in the org. The CCQG gate becomes a *reusable workflow* called by a 3-line stub in
+   every repo in the org. The CCQG gate becomes a _reusable workflow_ called by a 3-line stub in
    each repo, not 14 copy-pasted YAML files that drift (the self-audit found exactly this drift).
 3. **A template / "paved road" repo** — a `create-trainyard-engine` template (or a
    Turborepo/Nx generator) that scaffolds a new engine already wired to the config packages, the
    reusable gate, the AGENTS.md/SOUL.md/SKILL.md trio, and a passing test surface. New engines
    start on the golden path instead of being retrofitted onto it.
 
-None of these is a ".dotfiles" repo in the personal-env sense. Together they *are* the
+None of these is a ".dotfiles" repo in the personal-env sense. Together they _are_ the
 "enterprise config repo" you're reaching for — the mechanism by which one decision propagates to
 every product without manual porting.
 
@@ -46,7 +46,7 @@ An engine is a **sellable unit** — extractable to its own repo/product with `g
 publish, not a rewrite — if and only if it satisfies this contract **today, inside the monorepo**:
 
 - **Package boundary:** its own `package.json`, its own `index` public API, its own version.
-- **Public API only:** sibling engines import it *through its published interface*, never by
+- **Public API only:** sibling engines import it _through its published interface_, never by
   reaching into its internals. Enforced by lint (`no-restricted-imports` on deep paths) — the
   same static-surface discipline the contract tests already use on preload/index.
 - **Own test suite + own gate pass:** it goes green on its own, without the app around it.
@@ -56,14 +56,14 @@ publish, not a rewrite — if and only if it satisfies this contract **today, in
 
 The four engines and their target boundaries:
 
-| Engine | Package | Sellable as | Extraction readiness |
-|---|---|---|---|
-| StructureView (viewer) | `@trainyard/structureview` | Free→Pro file viewer | App shell; needs sample/mock data purged (see CORPUS) |
-| TIMC Light (scoring) | `@trainyard/timc-light` | Embedded quality signal | **Clean already** (S69 win; 55/55 selftests) |
-| CCQG Auditor | `@trainyard/ccqg-auditor` | Standalone audit tool | Has AGENTS/SOUL; needs package boundary + gate |
-| Quality Guardian / TIMC platform | `@trainyard/quality-guardian` | Enterprise platform | The bundle; consumes the other three as deps |
+| Engine                           | Package                       | Sellable as             | Extraction readiness                                  |
+| -------------------------------- | ----------------------------- | ----------------------- | ----------------------------------------------------- |
+| StructureView (viewer)           | `@trainyard/structureview`    | Free→Pro file viewer    | App shell; needs sample/mock data purged (see CORPUS) |
+| TIMC Light (scoring)             | `@trainyard/timc-light`       | Embedded quality signal | **Clean already** (S69 win; 55/55 selftests)          |
+| CCQG Auditor                     | `@trainyard/ccqg-auditor`     | Standalone audit tool   | Has AGENTS/SOUL; needs package boundary + gate        |
+| Quality Guardian / TIMC platform | `@trainyard/quality-guardian` | Enterprise platform     | The bundle; consumes the other three as deps          |
 
-The rule that makes the monorepo course-correction *mechanical later*: **the boundary is drawn now
+The rule that makes the monorepo course-correction _mechanical later_: **the boundary is drawn now
 in package.json and lint rules; extraction is a packaging operation, not an archaeology dig.**
 
 ## 4. The spike lane (so ideas stay cheap and nothing gets lost)
@@ -102,16 +102,16 @@ schema + build-time validation); port it.
 ## 6. PR breakdown (sized)
 
 1. **Config packages first:** extract `@trainyard/eslint-config` + `@trainyard/tsconfig` from the
-   current inline configs; StructureView consumes them. *1 session.* (Highest leverage — every
+   current inline configs; StructureView consumes them. _1 session._ (Highest leverage — every
    later step inherits.)
 2. **Reusable gate workflow** in the org `.github` repo; StructureView's 14 workflows collapse to
-   stubs that call it. *1 session.*
+   stubs that call it. _1 session._
 3. **Draw the four package boundaries** in package.json + add the `no-restricted-imports` fence.
-   No code moves yet — just the boundary + the fence that makes violations visible. *1–2 sessions.*
+   No code moves yet — just the boundary + the fence that makes violations visible. _1–2 sessions._
 4. **Stand up `spikes/`** + move antagonist/MockupCanvas/LemonAid into it; write the promotion
-   checklist as `docs/spike-promotion.md`. *1 session.*
-5. **Spec-linter** + docs index. *1 session.*
-6. **Purge mock data** (CORPUS, timc-samples) — wire CORPUS to live `docs`. *small.*
+   checklist as `docs/spike-promotion.md`. _1 session._
+5. **Spec-linter** + docs index. _1 session._
+6. **Purge mock data** (CORPUS, timc-samples) — wire CORPUS to live `docs`. _small._
 
 ## 7. Decision log (owner)
 

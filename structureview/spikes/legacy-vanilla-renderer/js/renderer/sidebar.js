@@ -4,12 +4,11 @@
 ──────────────────────────────────────────────────────────────── */
 
 window.Sidebar = (() => {
-
   // Map<filePath, {name, ext, modified}>
   const fileRegistry = new Map();
 
-  const fileList    = document.getElementById('file-list');
-  const emptyState  = document.getElementById('sidebar-empty');
+  const fileList = document.getElementById('file-list');
+  const emptyState = document.getElementById('sidebar-empty');
   const searchInput = document.getElementById('sidebar-search');
 
   let filterQuery = '';
@@ -25,19 +24,19 @@ window.Sidebar = (() => {
 
   function addFile(fileData) {
     fileRegistry.set(fileData.filePath, {
-      name:     fileData.name,
-      ext:      fileData.ext,
+      name: fileData.name,
+      ext: fileData.ext,
       modified: fileData.modified,
     });
     renderList();
   }
 
   function addFiles(filePaths) {
-    filePaths.forEach(fp => {
+    filePaths.forEach((fp) => {
       if (!fileRegistry.has(fp)) {
         const parts = fp.split(/[/\\]/);
-        const name  = parts[parts.length - 1];
-        const ext   = name.split('.').pop().toLowerCase();
+        const name = parts[parts.length - 1];
+        const ext = name.split('.').pop().toLowerCase();
         fileRegistry.set(fp, { name, ext, modified: null });
       }
     });
@@ -50,7 +49,7 @@ window.Sidebar = (() => {
   }
 
   function setActive(filePath) {
-    fileList.querySelectorAll('.file-entry').forEach(el => {
+    fileList.querySelectorAll('.file-entry').forEach((el) => {
       el.classList.toggle('active', el.dataset.path === filePath);
     });
   }
@@ -62,23 +61,20 @@ window.Sidebar = (() => {
 
     const entries = [...fileRegistry.entries()].filter(([fp, d]) => {
       if (!filterQuery) return true;
-      return d.name.toLowerCase().includes(filterQuery) ||
-             fp.toLowerCase().includes(filterQuery);
+      return d.name.toLowerCase().includes(filterQuery) || fp.toLowerCase().includes(filterQuery);
     });
 
     const isEmpty = fileRegistry.size === 0;
     emptyState.hidden = !isEmpty;
-    fileList.hidden   = isEmpty;
+    fileList.hidden = isEmpty;
 
     entries.forEach(([fp, data]) => {
       const div = document.createElement('div');
-      div.className    = 'file-entry';
+      div.className = 'file-entry';
       div.dataset.path = fp;
-      div.title        = fp;
+      div.title = fp;
 
-      const modText = data.modified
-        ? formatRelativeTime(new Date(data.modified))
-        : '';
+      const modText = data.modified ? formatRelativeTime(new Date(data.modified)) : '';
 
       div.innerHTML = `
         <span class="file-dot ${data.ext}"></span>
@@ -90,7 +86,7 @@ window.Sidebar = (() => {
         if (Tabs.has(fp)) {
           Tabs.switchTo(fp);
         } else {
-          window.structview.readFile(fp).then(result => {
+          window.structview.readFile(fp).then((result) => {
             if (result.ok) {
               Tabs.open({
                 filePath: fp,
@@ -116,15 +112,15 @@ window.Sidebar = (() => {
   // ── Utilities ────────────────────────────────────────────────
 
   function formatRelativeTime(date) {
-    const now   = Date.now();
-    const diff  = now - date.getTime();
-    const mins  = Math.floor(diff / 60000);
+    const now = Date.now();
+    const diff = now - date.getTime();
+    const mins = Math.floor(diff / 60000);
     const hours = Math.floor(diff / 3600000);
-    const days  = Math.floor(diff / 86400000);
-    if (mins  < 1)   return 'just now';
-    if (mins  < 60)  return `${mins}m ago`;
-    if (hours < 24)  return `${hours}h ago`;
-    if (days  < 7)   return `${days}d ago`;
+    const days = Math.floor(diff / 86400000);
+    if (mins < 1) return 'just now';
+    if (mins < 60) return `${mins}m ago`;
+    if (hours < 24) return `${hours}h ago`;
+    if (days < 7) return `${days}d ago`;
     return date.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
   }
 

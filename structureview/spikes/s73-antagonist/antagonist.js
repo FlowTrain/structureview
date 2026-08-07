@@ -65,7 +65,9 @@ async function generate(opts = {}) {
 // spec-instructions.md is deliberately excluded — at ~9.7K tokens it would blow the 16K window;
 // the TIMC Light critic enforces the format instead.
 const DEFAULT_GOVERNANCE = process.env.ANTAGONIST_GOVERNANCE
-  ? process.env.ANTAGONIST_GOVERNANCE.split(';').map((s) => s.trim()).filter(Boolean)
+  ? process.env.ANTAGONIST_GOVERNANCE.split(';')
+      .map((s) => s.trim())
+      .filter(Boolean)
   : ['C:\\Users\\JamesGifford\\Quality and Testing\\CLAUDE.md'];
 
 /**
