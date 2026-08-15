@@ -25,7 +25,7 @@ function captureCallback(win, callbackPrefix) {
       settled = true;
       fn(value);
     };
-    win.on('will-navigate', (url) => {
+    win.webContents.on('will-navigate', (event, url) => {
       if (!url.startsWith(callbackPrefix)) return;
       const token = extractToken(url);
       // Settle BEFORE closing — close() may fire 'closed' synchronously.

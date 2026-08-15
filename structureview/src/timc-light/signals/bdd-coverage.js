@@ -81,15 +81,19 @@ function isWellFormed(s) {
 
 /** AC ids referenced by a scenario, via its Gherkin tags or its name. */
 function referencedAcIds(scenario, acIds) {
-  const hay = (scenario.tags.join(' ') + ' ' + scenario.name).toUpperCase().replace(/\s/g, '');
-  return acIds.filter((id) => hay.includes(id.replace(/\s/g, '')));
+  const hay = (scenario.tags.join(' ') + ' ' + scenario.name).toUpperCase();
+  return acIds.filter((id) => {
+    const needle = id.replace(/\s/g, '');
+    const re = new RegExp('(?<![A-Z0-9])' + needle.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '(?![A-Z0-9])');
+    return re.test(hay.replace(/\s/g, ''));
+  });
 }
 
 /** Which ACs are covered by a well-formed scenario — id-matched when possible, else by count. */
 function coveredAcIds(acs, scenarios) {
   const ids = acs.map((a) => a.id);
   const wellFormed = scenarios.filter(isWellFormed);
-  const idMode = scenarios.some((s) => referencedAcIds(s, ids).length > 0);
+  const idMode = wellFormed.some((s) => referencedAcIds(s, ids).length > 0);
   const covered = new Set();
   if (idMode) {
     for (const s of wellFormed) for (const id of referencedAcIds(s, ids)) covered.add(id);
