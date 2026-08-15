@@ -26,6 +26,19 @@ function classes(variant, size, loading) {
   return parts.join(' ');
 }
 
+function buttonAttrs({ type, variant, size, id, disabled, loading }) {
+  return [
+    `type="${type}"`,
+    `class="${classes(variant, size, loading)}"`,
+    id ? `id="${escapeHtml(id)}"` : null,
+    disabled ? 'disabled' : null,
+    disabled ? 'aria-disabled="true"' : null,
+    loading ? 'aria-busy="true"' : null,
+  ]
+    .filter(Boolean)
+    .join(' ');
+}
+
 function renderButton({
   label,
   variant = 'primary',
@@ -41,17 +54,7 @@ function renderButton({
   if (!SIZES.has(size)) throw new Error(`Button: unknown size "${size}"`);
   if (!TYPES.has(type)) throw new Error(`Button: unknown type "${type}"`);
 
-  const attrs = [
-    `type="${type}"`,
-    `class="${classes(variant, size, loading)}"`,
-    id ? `id="${escapeHtml(id)}"` : null,
-    disabled ? 'disabled' : null,
-    disabled ? 'aria-disabled="true"' : null,
-    loading ? 'aria-busy="true"' : null,
-  ]
-    .filter(Boolean)
-    .join(' ');
-
+  const attrs = buttonAttrs({ type, variant, size, id, disabled, loading });
   const icon = iconHtml ? `<span class="sv-btn__icon">${iconHtml}</span>` : '';
   return `<button ${attrs}>${icon}${escapeHtml(label)}</button>`;
 }

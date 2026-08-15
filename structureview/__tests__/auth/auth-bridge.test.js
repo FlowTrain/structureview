@@ -13,6 +13,7 @@ const { createAuthBridge } = require('../../src/auth/auth-bridge');
 
 function fakeWindow() {
   const listeners = {};
+  const wcListeners = {};
   return {
     loadedUrl: null,
     closed: false,
@@ -22,12 +23,17 @@ function fakeWindow() {
     on(event, handler) {
       listeners[event] = handler;
     },
+    webContents: {
+      on(event, handler) {
+        wcListeners[event] = handler;
+      },
+    },
     close() {
       this.closed = true;
       if (listeners.closed) listeners.closed();
     },
     _fireNavigate(url) {
-      if (listeners['will-navigate']) listeners['will-navigate'](url);
+      if (wcListeners['will-navigate']) wcListeners['will-navigate']({}, url);
     },
     _fireClosed() {
       if (listeners.closed) listeners.closed();

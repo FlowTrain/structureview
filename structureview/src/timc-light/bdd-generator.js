@@ -6,6 +6,8 @@
 // acceptance criteria. Richer phrasing / edge-case reasoning / step definitions are where
 // the LLM skill adds value — this scaffold is the structural starting point it would refine.
 
+import { extractAcceptanceCriteria } from './acceptance-criteria.js';
+
 function clean(s) {
   return s.replace(/\s+/g, ' ').replace(/[*_`>]/g, '').trim();
 }
@@ -17,27 +19,10 @@ function asRole(situation) {
   return s.length > 60 ? 'user' : s;
 }
 
+// Acceptance-criteria extraction is shared with the BDD coverage signal so the generator's
+// denominator ("N acceptance criteria → scenarios") and the coverage denominator can never drift.
 function extractACs(markdown) {
-  const lines = markdown.split('\n');
-  const acs = [];
-  // 1) Explicitly labelled criteria anywhere (AC01, REQ-3, ...)
-  for (const line of lines) {
-    const m = line.match(/^\s*[-*]\s*(?:\[[ x]\]\s*)?\*{0,2}(AC\s?\d+|REQ-?\d+)\*{0,2}\s*[—:.-]*\s*(.+)$/i);
-    if (m) acs.push({ id: m[1].replace(/\s/g, ''), text: clean(m[2]) });
-  }
-  if (acs.length) return acs;
-  // 2) Fallback: bullets under an "Acceptance Criteria" heading
-  let inSection = false;
-  let n = 0;
-  for (const line of lines) {
-    if (/^#{1,4}\s/.test(line)) {
-      inSection = /acceptance criteria/i.test(line);
-    } else if (inSection && /^\s*[-*]\s+\S/.test(line)) {
-      n++;
-      acs.push({ id: `AC${String(n).padStart(2, '0')}`, text: clean(line.replace(/^\s*[-*]\s+/, '')) });
-    }
-  }
-  return acs.slice(0, 15);
+  return extractAcceptanceCriteria(markdown);
 }
 
 /**

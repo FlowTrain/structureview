@@ -97,6 +97,26 @@ function requirementDetail(line, lineNo) {
   };
 }
 
+function nonEarsFinding(trimmed, line) {
+  return { line, message: `Requirement not in EARS format: "${normalize(trimmed).slice(0, 60)}"`, severity: 'warning' };
+}
+
+/** Maintain the heading-nesting stack, marking sections that don't hold requirements. */
+function updateHeadingStack(stack, level, trimmed) {
+  while (stack.length && stack[stack.length - 1].level >= level) stack.pop();
+  stack.push({ level, excluded: EXCLUDED_HEADING.test(trimmed) });
+}
+
+/** A list line is scored only if it's a requirement outside an excluded section, not a checkbox
+ *  acceptance-criterion, and not an example-map label. */
+function isScorableRequirement(trimmed, stack) {
+  if (!isListItem(trimmed) || !isRequirement(trimmed)) return false;
+  if (stack.some((f) => f.excluded)) return false; // inside an excluded section
+  if (/^[-*]\s*\[[ xX]\]/.test(trimmed)) return false; // acceptance-criteria checkbox
+  if (NONREQ_LABEL.test(normalize(trimmed))) return false; // example-map label
+  return true;
+}
+
 /**
  * Scores EARS coverage over the requirement lines in a Markdown document.
  * score = (EARS-covered requirements / total requirements) × 100.
@@ -129,27 +149,16 @@ export function scoreEarsCoverage(markdown) {
     // NFR subsection nested under Technical Design).
     const level = headingLevel(trimmed);
     if (level > 0) {
-      while (stack.length && stack[stack.length - 1].level >= level) stack.pop();
-      stack.push({ level, excluded: EXCLUDED_HEADING.test(trimmed) });
+      updateHeadingStack(stack, level, trimmed);
       continue;
     }
 
-    if (!isListItem(trimmed) || !isRequirement(trimmed)) continue;
-    if (stack.some((f) => f.excluded)) continue; // inside an excluded section
-    if (/^[-*]\s*\[[ xX]\]/.test(trimmed)) continue; // acceptance-criteria checkbox
-    if (NONREQ_LABEL.test(normalize(trimmed))) continue; // example-map label
+    if (!isScorableRequirement(trimmed, stack)) continue;
 
     total++;
     requirements.push(requirementDetail(trimmed, i + 1));
-    if (classifyRequirement(trimmed) !== null) {
-      covered++;
-    } else {
-      findings.push({
-        line: i + 1,
-        message: `Requirement not in EARS format: "${normalize(trimmed).slice(0, 60)}"`,
-        severity: 'warning',
-      });
-    }
+    if (classifyRequirement(trimmed) !== null) covered++;
+    else findings.push(nonEarsFinding(trimmed, i + 1));
   }
 
   if (total === 0) {

@@ -5,12 +5,11 @@
 ──────────────────────────────────────────────────────────────── */
 
 window.Tabs = (() => {
-
   // Map<filePath, {name, ext, content, size, modified, scrollTop, rawMode}>
   const store = new Map();
-  let active  = null;
+  let active = null;
 
-  const tabBar    = document.getElementById('tab-bar');
+  const tabBar = document.getElementById('tab-bar');
   const docScroll = document.getElementById('doc-scroll');
 
   // ── Public API ───────────────────────────────────────────────
@@ -21,13 +20,17 @@ window.Tabs = (() => {
     if (store.has(filePath)) {
       // Update content (live reload) and switch to it
       const existing = store.get(filePath);
-      existing.content  = content;
-      existing.size     = size;
+      existing.content = content;
+      existing.size = size;
       existing.modified = modified;
       switchTo(filePath);
     } else {
       store.set(filePath, {
-        name, ext, content, size, modified,
+        name,
+        ext,
+        content,
+        size,
+        modified,
         scrollTop: 0,
         rawMode: false,
       });
@@ -86,15 +89,21 @@ window.Tabs = (() => {
     return data.rawMode;
   }
 
-  function getActive()      { return active ? store.get(active) : null; }
-  function getActivePath()  { return active; }
-  function has(filePath)    { return store.has(filePath); }
+  function getActive() {
+    return active ? store.get(active) : null;
+  }
+  function getActivePath() {
+    return active;
+  }
+  function has(filePath) {
+    return store.has(filePath);
+  }
 
   // ── Internal ─────────────────────────────────────────────────
 
   function renderTabEl(filePath) {
     const data = store.get(filePath);
-    const tab  = document.createElement('button');
+    const tab = document.createElement('button');
     tab.className = 'tab';
     tab.dataset.path = filePath;
     tab.title = filePath;
@@ -119,20 +128,20 @@ window.Tabs = (() => {
   }
 
   function updateTabActiveState(filePath) {
-    tabBar.querySelectorAll('.tab').forEach(t => {
+    tabBar.querySelectorAll('.tab').forEach((t) => {
       t.classList.toggle('active', t.dataset.path === filePath);
     });
   }
 
   function renderDocument(filePath) {
-    const data    = store.get(filePath);
+    const data = store.get(filePath);
 
     // If content hasn't loaded yet, fetch it then re-render
     if (!data.content) {
-      window.structview.readFile(filePath).then(result => {
+      window.structview.readFile(filePath).then((result) => {
         if (result.ok) {
-          data.content  = result.content;
-          data.size     = result.size;
+          data.content = result.content;
+          data.size = result.size;
           data.modified = result.modified;
           renderDocument(filePath);
         }
@@ -140,17 +149,17 @@ window.Tabs = (() => {
       return;
     }
 
-    const viewer  = document.getElementById('viewer');
+    const viewer = document.getElementById('viewer');
     const welcome = document.getElementById('welcome');
     const content = document.getElementById('doc-content');
     const breadcrumb = document.getElementById('viewer-breadcrumb');
     const titlebarFilename = document.getElementById('titlebar-filename');
-    const rawBtn  = document.getElementById('btn-toggle-raw');
+    const rawBtn = document.getElementById('btn-toggle-raw');
 
     welcome.hidden = true;
-    viewer.hidden  = false;
+    viewer.hidden = false;
 
-    breadcrumb.textContent      = filePath;
+    breadcrumb.textContent = filePath;
     titlebarFilename.textContent = data.name;
 
     const meta = { size: data.size, modified: data.modified };
@@ -168,7 +177,7 @@ window.Tabs = (() => {
         content.innerHTML = JSONRenderer.render(data.content, meta);
         JSONRenderer.attachToggleHandlers(content);
         // Store preview texts for re-expand
-        content.querySelectorAll('[data-preview]').forEach(el => {
+        content.querySelectorAll('[data-preview]').forEach((el) => {
           el.dataset.origPreview = el.textContent;
         });
       } else {
@@ -191,9 +200,9 @@ window.Tabs = (() => {
   }
 
   function showWelcome() {
-    const viewer  = document.getElementById('viewer');
+    const viewer = document.getElementById('viewer');
     const welcome = document.getElementById('welcome');
-    viewer.hidden  = true;
+    viewer.hidden = true;
     welcome.hidden = false;
     document.getElementById('titlebar-filename').textContent = '';
     document.getElementById('viewer-breadcrumb').textContent = '';
@@ -201,7 +210,7 @@ window.Tabs = (() => {
   }
 
   function attachExternalLinks(container) {
-    container.querySelectorAll('a.sv-external-link').forEach(a => {
+    container.querySelectorAll('a.sv-external-link').forEach((a) => {
       a.addEventListener('click', (e) => {
         e.preventDefault();
         const href = a.getAttribute('href');
@@ -211,10 +220,7 @@ window.Tabs = (() => {
   }
 
   function escapeHtml(str) {
-    return String(str)
-      .replace(/&/g, '&amp;')
-      .replace(/</g, '&lt;')
-      .replace(/>/g, '&gt;');
+    return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
   }
 
   return { open, updateContent, close, switchTo, toggleRaw, getActive, getActivePath, has };

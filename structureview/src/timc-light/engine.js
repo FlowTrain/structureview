@@ -13,12 +13,16 @@ import { scoreJsonQuality } from './signals/json-quality.js';
 import { scoreSectionCompleteness } from './signals/section-completeness.js';
 import { scoreBddCoverage } from './signals/bdd-coverage.js';
 
+function typeFromMime(mimeHint) {
+  if (mimeHint === 'application/json' || mimeHint === 'json') return 'json-response';
+  if (mimeHint === 'text/markdown' || mimeHint === 'markdown' || mimeHint === 'md') return 'markdown-spec';
+  return null;
+}
+
 /** @returns {'markdown-spec'|'json-response'|'unknown'} */
 export function detectDocumentType(content, mimeHint) {
-  if (mimeHint !== undefined) {
-    if (mimeHint === 'application/json' || mimeHint === 'json') return 'json-response';
-    if (mimeHint === 'text/markdown' || mimeHint === 'markdown' || mimeHint === 'md') return 'markdown-spec';
-  }
+  const byMime = mimeHint !== undefined ? typeFromMime(mimeHint) : null;
+  if (byMime) return byMime;
   const trimmed = content.trim();
   if (trimmed.startsWith('{') || trimmed.startsWith('[')) return 'json-response';
   if (/## /.test(content) || /- \[ \]/.test(content)) return 'markdown-spec';
