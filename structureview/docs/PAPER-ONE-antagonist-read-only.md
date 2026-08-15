@@ -345,9 +345,9 @@ end, and it is exactly the market that matters here.
     development as such.
 
 [^finra]:
-    SEC, *Twenty-Six Firms to Pay More Than $390 Million… for Widespread Recordkeeping
-Failures* (2024, $392.75M) and *Eleven Firms to Pay More Than $88 Million…* (2024); FINRA
-enforcement, e.g. BTIG ($600,000, 2024). These are recordkeeping/off-channel-communication
+    SEC, _Twenty-Six Firms to Pay More Than $390 Million… for Widespread Recordkeeping
+    Failures_ (2024, $392.75M) and _Eleven Firms to Pay More Than $88 Million…_ (2024); FINRA
+    enforcement, e.g. BTIG ($600,000, 2024). These are recordkeeping/off-channel-communication
     penalties, not code-quality penalties — cited as evidence that in regulated domains the cost of
     _ungoverned, unretained, unprovable output_ is large and real, which is the general class the
     Antagonist's audit trail and read-only standard exist to address.
@@ -543,8 +543,8 @@ AI adoption, refactoring's share collapsing, cloned/copy-pasted code rising abov
 the empirical shape of AI raising the cost of owning code even as it lowers the cost of emitting
 it.)_
 
-SEC (2024). *Twenty-Six Firms to Pay More Than $390 Million… for Widespread Recordkeeping
-Failures* ($392.75M); *Eleven Firms to Pay More Than $88 Million…*; and FINRA recordkeeping
+SEC (2024). _Twenty-Six Firms to Pay More Than $390 Million… for Widespread Recordkeeping
+Failures_ ($392.75M); _Eleven Firms to Pay More Than $88 Million…_; and FINRA recordkeeping
 enforcement (e.g. BTIG, $600K). _(The price of ungoverned, unretained output in a regulated
 domain — the steep end of the cost curve the platform is built to serve.)_
 
