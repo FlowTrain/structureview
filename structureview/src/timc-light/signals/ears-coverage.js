@@ -107,30 +107,24 @@ function updateHeadingStack(stack, level, trimmed) {
   stack.push({ level, excluded: EXCLUDED_HEADING.test(trimmed) });
 }
 
-/** A list line is scored only if it's a requirement outside an excluded section, not a checkbox
- *  acceptance-criterion, and not an example-map label. */
-function isScorableRequirement(trimmed, stack) {
-  if (!isListItem(trimmed) || !isRequirement(trimmed)) return false;
-  if (stack.some((f) => f.excluded)) return false; // inside an excluded section
-  if (/^[-*]\s*\[[ xX]\]/.test(trimmed)) return false; // acceptance-criteria checkbox
-  if (NONREQ_LABEL.test(normalize(trimmed))) return false; // example-map label
-  return true;
-}
-
 /**
  * Scores EARS coverage over the requirement lines in a Markdown document.
  * score = (EARS-covered requirements / total requirements) × 100.
  */
 function isTableRow(t){ return /^\|.*\|\s*$/.test(t); }
 function isTableSeparator(t){ return /^\|[\s:|-]+\|\s*$/.test(t); }
-function tableCells(t){ return t.replace(/^\||\|$/g,'').split('|').map(c=>c.trim()); }
+function tableCells(t){ return t.replace(/^\||\|$/g,'').split('|').map((c) => c.trim()); }
+function isCheckbox(t){ return /^[-*]\s*\[[ xX]\]/.test(t); }
+function listReq(t){ return (!isCheckbox(t) && isRequirement(t)) ? t : null; }
+function tableReq(t){ if (isTableSeparator(t)) return null; return tableCells(t).find((c) => STRONG.test(normalize(c))) || null; }
+function proseReq(t){ return (t.length > 0 && STRONG.test(normalize(t))) ? t : null; }
+/** The requirement text for a scorable line (list | table | prose), or null. */
 function scorableRequirementText(trimmed, stack){
-  if (stack.some((f)=>f.excluded)) return null;
+  if (stack.some((f) => f.excluded)) return null;
   if (NONREQ_LABEL.test(normalize(trimmed))) return null;
-  if (isListItem(trimmed)){ if (/^[-*]\s*\[[ xX]\]/.test(trimmed)) return null; return isRequirement(trimmed) ? trimmed : null; }
-  if (isTableRow(trimmed)){ if (isTableSeparator(trimmed)) return null; const cell = tableCells(trimmed).find((c)=>STRONG.test(normalize(c))); return cell || null; }
-  if (trimmed.length>0 && STRONG.test(normalize(trimmed))) return trimmed;
-  return null;
+  if (isListItem(trimmed)) return listReq(trimmed);
+  if (isTableRow(trimmed)) return tableReq(trimmed);
+  return proseReq(trimmed);
 }
 
 export function scoreEarsCoverage(markdown) {
