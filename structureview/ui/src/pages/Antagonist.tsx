@@ -12,7 +12,7 @@
 
 import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { analyse } from '@timc/engine.js'
+import { analyse, clears } from '@timc/engine.js'
 
 type GenResult = { ok: true; content: string; model: string; endpoint: string } | { ok: false; message: string }
 
@@ -110,7 +110,7 @@ export function Antagonist() {
   const findings: { signal: string; message: string }[] = verdict
     ? verdict.signals.flatMap((s: any) => (s.findings || []).map((f: any) => ({ signal: s.type, message: f.message })))
     : []
-  const pass = composite >= 90
+  const pass = clears(composite)
 
   const run = async (withFeedback: boolean) => {
     if (!bridge) {

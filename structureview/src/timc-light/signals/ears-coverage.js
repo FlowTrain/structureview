@@ -25,7 +25,7 @@ const VAGUE = /\b(?:relevant|appropriate|appropriately|as needed|as required|etc
 // criteria, dependencies) scores LOWER, which is backwards. `non-functional` guards the NFR
 // subsection; `functional requirements` / `ears` headings are the ones we DO scan.
 const EXCLUDED_HEADING =
-  /\b(?:scope|objective|bdd|gherkin|scenario|scenarios|example\s*map|test\s*strategy|test\s*plan|testing|pr\s*breakdown|pull\s*request|dependenc\w*|acceptance\s*criteria|decision\s*log|delivery\s*surface|integration|formatting|non-?functional)\b/i;
+  /\b(?:scope|objective|bdd|gherkin|scenario|scenarios|example\s*map|test\s*strategy|test\s*plan|testing|pr\s*breakdown|pull\s*request|dependenc\w*|acceptance\s*criteria|decision\s*log|formatting)\b/i;
 
 // Example-Map labels ("Happy path:", "Edge case:", "Failure case:", "Rule:") are prose, not
 // requirements, even though they carry trigger words like "when"/"if".
@@ -121,9 +121,21 @@ function isScorableRequirement(trimmed, stack) {
  * Scores EARS coverage over the requirement lines in a Markdown document.
  * score = (EARS-covered requirements / total requirements) × 100.
  */
+function isTableRow(t){ return /^\|.*\|\s*$/.test(t); }
+function isTableSeparator(t){ return /^\|[\s:|-]+\|\s*$/.test(t); }
+function tableCells(t){ return t.replace(/^\||\|$/g,'').split('|').map(c=>c.trim()); }
+function scorableRequirementText(trimmed, stack){
+  if (stack.some((f)=>f.excluded)) return null;
+  if (NONREQ_LABEL.test(normalize(trimmed))) return null;
+  if (isListItem(trimmed)){ if (/^[-*]\s*\[[ xX]\]/.test(trimmed)) return null; return isRequirement(trimmed) ? trimmed : null; }
+  if (isTableRow(trimmed)){ if (isTableSeparator(trimmed)) return null; const cell = tableCells(trimmed).find((c)=>STRONG.test(normalize(c))); return cell || null; }
+  if (trimmed.length>0 && STRONG.test(normalize(trimmed))) return trimmed;
+  return null;
+}
+
 export function scoreEarsCoverage(markdown) {
   if (markdown.trim() === '') {
-    return { signalId: 'ears-coverage', type: 'ears-coverage', score: 100, findings: [], canResolve: false, requirements: [] };
+    return { signalId: 'ears-coverage', type: 'ears-coverage', score: 0, findings: [{ line: 0, message: 'insufficient evidence: no scorable requirements', severity: 'warning' }], canResolve: false, requirements: [] };
   }
 
   const lines = markdown.split('\n');
@@ -153,16 +165,17 @@ export function scoreEarsCoverage(markdown) {
       continue;
     }
 
-    if (!isScorableRequirement(trimmed, stack)) continue;
+    const reqLine = scorableRequirementText(trimmed, stack);
+    if (reqLine === null) continue;
 
     total++;
-    requirements.push(requirementDetail(trimmed, i + 1));
-    if (classifyRequirement(trimmed) !== null) covered++;
-    else findings.push(nonEarsFinding(trimmed, i + 1));
+    requirements.push(requirementDetail(reqLine, i + 1));
+    if (classifyRequirement(reqLine) !== null && !VAGUE.test(normalize(reqLine))) covered++;
+    else findings.push(nonEarsFinding(reqLine, i + 1));
   }
 
   if (total === 0) {
-    return { signalId: 'ears-coverage', type: 'ears-coverage', score: 100, findings: [], canResolve: false, requirements: [] };
+    return { signalId: 'ears-coverage', type: 'ears-coverage', score: 0, findings: [{ line: 0, message: 'insufficient evidence: no scorable requirements', severity: 'warning' }], canResolve: false, requirements: [] };
   }
 
   return { signalId: 'ears-coverage', type: 'ears-coverage', score: (covered / total) * 100, findings, canResolve: false, requirements };

@@ -5,12 +5,12 @@ import 'highlight.js/styles/github-dark.css'
 import { Link } from 'react-router-dom'
 import { Sidebar } from '../components/layout/Sidebar'
 import { Topbar } from '../components/layout/Topbar'
-import { analyse } from '@timc/engine.js'
+import { analyse, clears } from '@timc/engine.js'
 import { generateBdd } from '@timc/bdd-generator.js'
 
 // Score helpers driven by the real TIMC Light engine output.
 function statusFor(score: number): 'pass' | 'warn' | 'fail' {
-  return score >= 80 ? 'pass' : score >= 60 ? 'warn' : 'fail'
+  return clears(score) ? 'pass' : score >= 60 ? 'warn' : 'fail'
 }
 
 function formatSize(bytes: number): string {
@@ -206,7 +206,7 @@ export function StructureView() {
     for (const d of docs) {
       const ears = d.result.signals.find((s: any) => s.type === 'ears-coverage')
       requirements += ears?.requirements?.length ?? 0
-      if (d.score > 80) pass++
+      if (clears(d.score)) pass++
       else if (d.score >= 60) warn++
       else fail++
     }
