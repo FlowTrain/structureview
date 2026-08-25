@@ -82,7 +82,7 @@ function isWellFormed(s) {
 /** AC ids referenced by a scenario, via its Gherkin tags or its name. */
 const STOP = new Set(['shall','must','should','when','then','given','with','that','this','from','into','have','been','which','their','there','where','while','scenario','feature','system','user','error','named','form']);
 function tokenize(s){ return new Set((String(s).toLowerCase().match(/[a-z]{4,}/g) || []).filter((w) => !STOP.has(w))); }
-function overlaps(acText, scenarioName){ const a = tokenize(acText), b = tokenize(scenarioName); let n = 0; for (const w of a) if (b.has(w)) n++; return n >= 2; }
+function overlaps(acText, scenarioName){ const a = tokenize(acText), b = tokenize(scenarioName); let n = 0; for (const w of a) if (b.has(w)) n++; return a.size > 0 && n >= Math.min(2, a.size); }
 function isSubstantive(scenario){ return tokenize(scenario.name).size >= 1; }
 function referencedAcIds(scenario, acIds) {
   const hay = (scenario.tags.join(' ') + ' ' + scenario.name).toUpperCase();

@@ -20,10 +20,11 @@ const PATTERN_LABEL = {
 // Vague language that makes an otherwise-matched requirement ambiguous (→ warn).
 const VAGUE = /\b(?:relevant|appropriate|appropriately|as needed|as required|etc|reasonable|user-friendly|robust|efficient|efficiently|gracefully|properly|adequate|adequately|several|some|many)\b/i;
 
-// Sections that do NOT hold functional requirements. Bullets under these headings must never
-// be scored as EARS requirements — otherwise a MORE complete spec (with NFRs, tests, acceptance
-// criteria, dependencies) scores LOWER, which is backwards. `non-functional` guards the NFR
-// subsection; `functional requirements` / `ears` headings are the ones we DO scan.
+// Narrative sections that do NOT hold requirements — scope/objective are framing; bdd / scenarios /
+// test-strategy / pr-breakdown / decision-log are their own artifacts. Bullets/prose under these are
+// not scored as EARS. NOTE (PR2b): `delivery-surface`, `integration`, and `non-functional` were
+// REMOVED from this list — they DO carry real requirements (often in EARS tables), and excluding them
+// silently undercounted complete specs (S82 / the CO family). Requirements there are now scored.
 const EXCLUDED_HEADING =
   /\b(?:scope|objective|bdd|gherkin|scenario|scenarios|example\s*map|test\s*strategy|test\s*plan|testing|pr\s*breakdown|pull\s*request|dependenc\w*|acceptance\s*criteria|decision\s*log|formatting)\b/i;
 
