@@ -14,7 +14,7 @@ import { Link } from 'react-router-dom'
 import { useEditor, EditorContent } from '@tiptap/react'
 import StarterKit from '@tiptap/starter-kit'
 import { Markdown } from 'tiptap-markdown'
-import { analyse } from '@timc/engine.js'
+import { analyse, clears, WATERMARK } from '@timc/engine.js'
 
 // CCQG 10-section template (spec-instructions.md §3) with an EARS block and a Gherkin block,
 // so a freshly-scaffolded doc already exercises every analyser. Authors fill it in.
@@ -240,7 +240,7 @@ export function SpecAuthor() {
         </div>
         <div style={{ fontSize: 44, fontWeight: 700, color: compColour, lineHeight: 1, marginBottom: 4 }}>{composite}</div>
         <div style={{ fontSize: 11, color: 'var(--txm)', marginBottom: 20 }}>
-          bar = 90 · {composite >= 90 ? 'clears it' : 'below bar'}
+          bar = {WATERMARK} · {clears(composite) ? 'clears it' : 'below bar'}
         </div>
 
         {ears && <Bar label={`EARS (${ears.requirements?.length ?? 0} reqs)`} score={ears.score} />}

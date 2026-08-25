@@ -20,12 +20,13 @@ const PATTERN_LABEL = {
 // Vague language that makes an otherwise-matched requirement ambiguous (→ warn).
 const VAGUE = /\b(?:relevant|appropriate|appropriately|as needed|as required|etc|reasonable|user-friendly|robust|efficient|efficiently|gracefully|properly|adequate|adequately|several|some|many)\b/i;
 
-// Sections that do NOT hold functional requirements. Bullets under these headings must never
-// be scored as EARS requirements — otherwise a MORE complete spec (with NFRs, tests, acceptance
-// criteria, dependencies) scores LOWER, which is backwards. `non-functional` guards the NFR
-// subsection; `functional requirements` / `ears` headings are the ones we DO scan.
+// Narrative sections that do NOT hold requirements — scope/objective are framing; bdd / scenarios /
+// test-strategy / pr-breakdown / decision-log are their own artifacts. Bullets/prose under these are
+// not scored as EARS. NOTE (PR2b): `delivery-surface`, `integration`, and `non-functional` were
+// REMOVED from this list — they DO carry real requirements (often in EARS tables), and excluding them
+// silently undercounted complete specs (S82 / the CO family). Requirements there are now scored.
 const EXCLUDED_HEADING =
-  /\b(?:scope|objective|bdd|gherkin|scenario|scenarios|example\s*map|test\s*strategy|test\s*plan|testing|pr\s*breakdown|pull\s*request|dependenc\w*|acceptance\s*criteria|decision\s*log|delivery\s*surface|integration|formatting|non-?functional)\b/i;
+  /\b(?:scope|objective|bdd|gherkin|scenario|scenarios|example\s*map|test\s*strategy|test\s*plan|testing|pr\s*breakdown|pull\s*request|dependenc\w*|acceptance\s*criteria|decision\s*log|formatting)\b/i;
 
 // Example-Map labels ("Happy path:", "Edge case:", "Failure case:", "Rule:") are prose, not
 // requirements, even though they carry trigger words like "when"/"if".
@@ -107,23 +108,29 @@ function updateHeadingStack(stack, level, trimmed) {
   stack.push({ level, excluded: EXCLUDED_HEADING.test(trimmed) });
 }
 
-/** A list line is scored only if it's a requirement outside an excluded section, not a checkbox
- *  acceptance-criterion, and not an example-map label. */
-function isScorableRequirement(trimmed, stack) {
-  if (!isListItem(trimmed) || !isRequirement(trimmed)) return false;
-  if (stack.some((f) => f.excluded)) return false; // inside an excluded section
-  if (/^[-*]\s*\[[ xX]\]/.test(trimmed)) return false; // acceptance-criteria checkbox
-  if (NONREQ_LABEL.test(normalize(trimmed))) return false; // example-map label
-  return true;
-}
-
 /**
  * Scores EARS coverage over the requirement lines in a Markdown document.
  * score = (EARS-covered requirements / total requirements) × 100.
  */
+function isTableRow(t){ return /^\|.*\|\s*$/.test(t); }
+function isTableSeparator(t){ return /^\|[\s:|-]+\|\s*$/.test(t); }
+function tableCells(t){ return t.replace(/^\||\|$/g,'').split('|').map((c) => c.trim()); }
+function isCheckbox(t){ return /^[-*]\s*\[[ xX]\]/.test(t); }
+function listReq(t){ return (!isCheckbox(t) && isRequirement(t)) ? t : null; }
+function tableReq(t){ if (isTableSeparator(t)) return null; return tableCells(t).find((c) => STRONG.test(normalize(c))) || null; }
+function proseReq(t){ return (t.length > 0 && STRONG.test(normalize(t))) ? t : null; }
+/** The requirement text for a scorable line (list | table | prose), or null. */
+function scorableRequirementText(trimmed, stack){
+  if (stack.some((f) => f.excluded)) return null;
+  if (NONREQ_LABEL.test(normalize(trimmed))) return null;
+  if (isListItem(trimmed)) return listReq(trimmed);
+  if (isTableRow(trimmed)) return tableReq(trimmed);
+  return proseReq(trimmed);
+}
+
 export function scoreEarsCoverage(markdown) {
   if (markdown.trim() === '') {
-    return { signalId: 'ears-coverage', type: 'ears-coverage', score: 100, findings: [], canResolve: false, requirements: [] };
+    return { signalId: 'ears-coverage', type: 'ears-coverage', score: 0, findings: [{ line: 0, message: 'insufficient evidence: no scorable requirements', severity: 'warning' }], canResolve: false, requirements: [] };
   }
 
   const lines = markdown.split('\n');
@@ -153,16 +160,17 @@ export function scoreEarsCoverage(markdown) {
       continue;
     }
 
-    if (!isScorableRequirement(trimmed, stack)) continue;
+    const reqLine = scorableRequirementText(trimmed, stack);
+    if (reqLine === null) continue;
 
     total++;
-    requirements.push(requirementDetail(trimmed, i + 1));
-    if (classifyRequirement(trimmed) !== null) covered++;
-    else findings.push(nonEarsFinding(trimmed, i + 1));
+    requirements.push(requirementDetail(reqLine, i + 1));
+    if (classifyRequirement(reqLine) !== null && !VAGUE.test(normalize(reqLine))) covered++;
+    else findings.push(nonEarsFinding(reqLine, i + 1));
   }
 
   if (total === 0) {
-    return { signalId: 'ears-coverage', type: 'ears-coverage', score: 100, findings: [], canResolve: false, requirements: [] };
+    return { signalId: 'ears-coverage', type: 'ears-coverage', score: 0, findings: [{ line: 0, message: 'insufficient evidence: no scorable requirements', severity: 'warning' }], canResolve: false, requirements: [] };
   }
 
   return { signalId: 'ears-coverage', type: 'ears-coverage', score: (covered / total) * 100, findings, canResolve: false, requirements };

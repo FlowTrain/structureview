@@ -37,7 +37,7 @@ export function analyse(content, mimeHint) {
   const documentType = detectDocumentType(content, mimeHint);
 
   if (documentType === 'unknown') {
-    return { documentType, signals: [], aggregateScore: 100, shouldShowCTA: false };
+    return { documentType, signals: [], aggregateScore: 0, shouldShowCTA: true };
   }
 
   let signals = [];
@@ -54,9 +54,13 @@ export function analyse(content, mimeHint) {
   // BDD scenarios takes the hit — the bar is intentionally high so pre-template specs
   // (S12–S31) surface the work needed to bring them to the current standard.
   const aggregateScore =
-    signals.length === 0 ? 100 : signals.reduce((sum, s) => sum + s.score, 0) / signals.length;
+    signals.length === 0 ? 0 : signals.reduce((sum, s) => sum + s.score, 0) / signals.length;
 
   const shouldShowCTA = signals.some(s => !s.canResolve && s.findings.length > 0);
 
   return { documentType, signals, aggregateScore, shouldShowCTA };
 }
+
+// TL-S1m1 — the one canonical pass line (drift face #2). Governed by TL-S1; owner-set 2026-08-24.
+export const WATERMARK = 85;
+export const clears = (score) => score >= WATERMARK;

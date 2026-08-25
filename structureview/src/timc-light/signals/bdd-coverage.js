@@ -80,12 +80,16 @@ function isWellFormed(s) {
 }
 
 /** AC ids referenced by a scenario, via its Gherkin tags or its name. */
+const STOP = new Set(['shall','must','should','when','then','given','with','that','this','from','into','have','been','which','their','there','where','while','scenario','feature','system','user','error','named','form']);
+function tokenize(s){ return new Set((String(s).toLowerCase().match(/[a-z]{4,}/g) || []).filter((w) => !STOP.has(w))); }
+function overlaps(acText, scenarioName){ const a = tokenize(acText), b = tokenize(scenarioName); let n = 0; for (const w of a) if (b.has(w)) n++; return a.size > 0 && n >= Math.min(2, a.size); }
+function isSubstantive(scenario){ return tokenize(scenario.name).size >= 1; }
 function referencedAcIds(scenario, acIds) {
   const hay = (scenario.tags.join(' ') + ' ' + scenario.name).toUpperCase();
   return acIds.filter((id) => {
-    const needle = id.replace(/\s/g, '');
-    const re = new RegExp('(?<![A-Z0-9])' + needle.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '(?![A-Z0-9])');
-    return re.test(hay.replace(/\s/g, ''));
+    const alpha = id.replace(/[0-9]/g, ''); const digits = id.replace(/[^0-9]/g, '');
+    const re = new RegExp('(?<![A-Z0-9])' + alpha + '\\s*' + digits + '(?![A-Z0-9])');
+    return re.test(hay);
   });
 }
 
@@ -98,7 +102,7 @@ function coveredAcIds(acs, scenarios) {
   if (idMode) {
     for (const s of wellFormed) for (const id of referencedAcIds(s, ids)) covered.add(id);
   } else {
-    for (let k = 0; k < Math.min(wellFormed.length, ids.length); k++) covered.add(ids[k]);
+    for (const ac of acs) if (wellFormed.some((s) => overlaps(ac.text, s.name))) covered.add(ac.id);
   }
   return { covered, idMode };
 }
@@ -121,7 +125,7 @@ function result(score, findings, breakdown) {
 /** No acceptance criteria to denominate against → report well-formedness of scenarios instead. */
 function wellFormedOnly(scenarios) {
   const total = scenarios.length;
-  const wellFormed = scenarios.filter(isWellFormed).length;
+  const wellFormed = scenarios.filter((s) => isWellFormed(s) && isSubstantive(s)).length;
   const base = { acsTotal: 0, acsCovered: 0, missingAcs: [], scenarios: total, wellFormed };
   if (total === 0) {
     return result(0, [{ message: 'No Gherkin scenarios found (Scenario / Given-When-Then)', severity: 'warning' }], base);

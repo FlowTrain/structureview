@@ -31,12 +31,12 @@ ok('when-trigger is a requirement', isRequirement('- When X happens, do Y') === 
 // EARS scoring
 ok('all covered = 100', scoreEarsCoverage('- The system shall a\n- When x, the system shall b').score === 100);
 ok('all weak = 0', scoreEarsCoverage('- Data should cache\n- Users may export').score === 0);
-ok('prose-only doc = 100 (no requirements)', scoreEarsCoverage('- a manifest\n- a note\n- a link').score === 100);
+ok('no scorable requirements = 0 (insufficient)', scoreEarsCoverage('- a manifest\n- a note\n- a link').score === 0);
 const mixed = scoreEarsCoverage('- The system shall a\n- Data should cache\n- While y, the system shall c\n- Users may export');
 ok('mixed = 50', mixed.score === 50);
 ok('mixed → 2 warnings', mixed.findings.length === 2 && mixed.findings.every(f => f.severity === 'warning'));
-ok('empty = 100', scoreEarsCoverage('').score === 100);
-ok('no list items = 100', scoreEarsCoverage('# Title\n\nProse paragraph.').score === 100);
+ok('empty = 0 (insufficient)', scoreEarsCoverage('').score === 0);
+ok('prose without requirements = 0', scoreEarsCoverage('# Title\n\nProse paragraph.').score === 0);
 
 // JSON quality
 ok('invalid json score 0', scoreJsonQuality('not json {{{').score === 0);
@@ -65,7 +65,7 @@ const sj70 = scoreJsonQuality('{"a":null,"b":null,"c":null,"d":null,"e":1}');
 ok('BDD score exactly 70', approx(sj70.score, 70) && sj70.canResolve === true);
 ok('BDD score 70 no CTA', analyse('{"a":null,"b":null,"c":null,"d":null,"e":1}').shouldShowCTA === false);
 const ou = analyse('plain prose with no structure');
-ok('BDD unknown → 100, no signals, no CTA', ou.documentType === 'unknown' && ou.aggregateScore === 100 && ou.signals.length === 0 && ou.shouldShowCTA === false);
+ok('unknown → 0 (insufficient), no signals, CTA', ou.documentType === 'unknown' && ou.aggregateScore === 0 && ou.signals.length === 0 && ou.shouldShowCTA === true);
 
 // Section completeness
 const allSections = '# S99\n## 1. Objective\n## 2. Scope\n## 3. Technical Design\n## 4. BDD Scenarios\n## 5. Test Strategy\n## 6. PR Breakdown\n## 7. Dependencies\n## 8. Acceptance Criteria\n## 9. Decision Log\n## 10. Delivery Surface & Integration';
@@ -81,7 +81,7 @@ ok('markdown returns ears+sections+bdd', mdoc.signals.length === 3 && ['ears-cov
 ok('markdown aggregate blends to 100', Math.round(mdoc.aggregateScore) === 100);
 
 // BDD coverage
-ok('bdd well-formed = 100', scoreBddCoverage('Scenario: a\n  Given x\n  When y\n  Then z').score === 100);
+ok('bdd well-formed (no ACs, substantive) = 100', scoreBddCoverage('Scenario: rejects an invalid payload\n  Given x\n  When y\n  Then z').score === 100);
 const bmiss = scoreBddCoverage('Scenario: a\n  Given x\n  When y');
 ok('bdd missing Then → 0 with finding', bmiss.score === 0 && bmiss.findings[0].message.includes('Then'));
 ok('bdd none → 0 with finding', scoreBddCoverage('# prose').score === 0 && scoreBddCoverage('# x').findings.length === 1);
@@ -119,14 +119,14 @@ const specCount = `## Acceptance Criteria
 - [ ] the release section is present
 
 ## Scenarios
-Scenario: happy path
+Scenario: the app exits 0 on success
   Given the system is ready
   When the pipeline runs
   Then it exits 0`;
 const covCount = scoreBddCoverage(specCount);
-ok('count fallback: 1 of 3 ACs covered', covCount.breakdown.acsCovered === 1 && covCount.breakdown.acsTotal === 3);
+ok('overlap-match: 1 of 3 ACs covered', covCount.breakdown.acsCovered === 1 && covCount.breakdown.acsTotal === 3);
 ok('count fallback: match mode is count', covCount.breakdown.matchMode === 'count');
-ok('count fallback: trailing ACs flagged by id', covCount.breakdown.missingAcs.join(',') === 'AC02,AC03');
+ok('overlap-match: uncovered ACs flagged by id', covCount.breakdown.missingAcs.join(',') === 'AC02,AC03');
 
 // Well-formedness stays a SEPARATE secondary check: a malformed scenario does not earn AC coverage
 // and is surfaced with its own missing-step finding.

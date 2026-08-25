@@ -70,3 +70,6 @@ export interface JobStory {
 }
 /** Deterministic Gherkin scaffold from a spec's Job Stories (S39 skill pipeline, non-LLM). */
 export function generateBdd(markdown: string): { jobStories: JobStory[]; gherkin: string };
+
+export const WATERMARK: number;
+export function clears(score: number): boolean;
